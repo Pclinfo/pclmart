@@ -8,6 +8,8 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
+from app.users.database import create
+
 
 
 def verify_user_login(username, password):
@@ -47,6 +49,7 @@ def user_login():
         }
 
         token = generate_token(user_data)
+        print(token)
 
         session['token'] = token
         session['user_id'] = user_id

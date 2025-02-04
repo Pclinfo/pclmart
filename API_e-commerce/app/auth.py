@@ -1,19 +1,20 @@
 from flask import request, jsonify, session, redirect, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.database import get_db_connection, verify_user,verify_admin_user
+from app.database import get_db_connection, verify_user, verify_admin_user
 import time
 import os
 from markupsafe import escape
 from werkzeug.utils import secure_filename
 from psycopg2.extras import RealDictCursor
 from app.authTokens import generate_token, validate_token
+import json
 
 SESSION_TIMEOUT = 5 * 60
 WARNING_TIME = 2 * 60
 
+
 def register():
     data = request.json
-    print(data)
     name = data.get('fullname', '').strip()
     email = data.get('email', '').strip()
     password = data.get('password', '').strip()
@@ -25,11 +26,11 @@ def register():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        cursor.execute("SELECT email FROM seller_users WHERE email = %s", (email,))
         if cursor.fetchone():
             return jsonify({"error": "User already exists"}), 400
 
-        cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
+        cursor.execute("INSERT INTO seller_users (name, email, password) VALUES (%s, %s, %s)",
                        (name, email, hashed_password))
         conn.commit()
         return jsonify({"message": "Registration successful"}), 201
@@ -56,6 +57,7 @@ def login():
         }
 
         token = generate_token(user_data)
+        print(token)
 
         session['token'] = token
         session['user_id'] = user_id
@@ -69,10 +71,10 @@ def login():
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 
+
 def admin_login():
     if request.method == 'POST' or request.method == 'GET':
         data = request.get_json()
-        print(data)
         if not data:
             return jsonify({"error": "Invalid request"}), 400
 
@@ -101,6 +103,7 @@ def admin_login():
         else:
             return jsonify({"error": "Invalid credentials"}), 401
 
+
 def check_session():
     if 'user_id' in session:
         last_active = session.get('last_active', time.time())
@@ -125,6 +128,7 @@ def check_session():
 
     return jsonify({'status': 'logged_out', 'message': 'No active session'}), 401
 
+
 def user(user_id):
     global connection
     if not user_id:
@@ -133,7 +137,7 @@ def user(user_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT id, email, first_name,phone_number,profile_path FROM users WHERE id = %s",
+        cursor.execute("SELECT id, email, first_name,phone_number,profile_path FROM seller_users WHERE id = %s",
                        (user_id,))
         user = cursor.fetchone()
 
@@ -142,7 +146,7 @@ def user(user_id):
                 "id": user[0],
                 "email": user[1],
                 "name": user[2],
-                "phone_number":user[3],
+                "phone_number": user[3],
                 "profile_picture": user[4]
             })
         else:
@@ -159,7 +163,6 @@ def handle_seller_registration():
     if request.method == "POST":
         try:
             data = request.form.to_dict()
-            print(data)
             files = request.files
 
             token_payload = getattr(request, 'token_payload', None)
@@ -320,7 +323,6 @@ def add_product():
 
             data = request.form.to_dict()
             files = request.files
-            print(data)
             token_payload = getattr(request, 'token_payload', None)
 
             if token_payload:
@@ -330,7 +332,6 @@ def add_product():
 
             else:
                 user_id = escape(data.get('user'))
-
 
             product_name = escape(data.get('productName'))
             product_description = escape(data.get('productDescription'))
@@ -424,7 +425,7 @@ def admin_product_details():
 
 
 def product_details():
-
+    global conn
     token_payload = getattr(request, 'token_payload', None)
 
     if token_payload:
@@ -464,6 +465,48 @@ def product_details():
         if 'conn' in locals() and conn:
             conn.close()
 
+
+def product_detail_id(pid):
+    token_payload = getattr(request, 'token_payload', None)
+
+    if token_payload:
+        user_id = token_payload.get('user_id')
+    else:
+        user_id = session.get('user_id')
+
+    if not user_id:
+        return jsonify({
+            'error': 'Unable to determine user ID',
+            'token_payload': token_payload,
+            'session': dict(session)
+        }), 401
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM add_product WHERE userid = %s and pid=%s;", (user_id, pid))
+        products = cursor.fetchall()
+
+        return jsonify({
+            'products': products,
+            'user_id': user_id
+        }), 200
+
+    except Exception as e:
+        print("Database Error:", str(e))
+        return jsonify({
+            'error': 'Failed to fetch product details',
+            'details': str(e)
+        }), 500
+
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+
+
 def delete_product(pid):
     try:
         conn = get_db_connection()
@@ -490,14 +533,64 @@ def delete_product(pid):
 
 
 def edit_product(pid):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        update_data = request.json
+        update_data = request.form.to_dict()
+        files = request.files
+
+
+        product_thumbnail = files.get('product_thumbnail')
+        if product_thumbnail and product_thumbnail.filename:
+            filename = secure_filename(product_thumbnail.filename)
+            product_thumbnail_path = os.path.join('./uploads/thumbnail', filename)
+            os.makedirs('./uploads/thumbnail', exist_ok=True)
+            product_thumbnail.save(product_thumbnail_path)
+            update_data['product_thumbnail'] = product_thumbnail_path
+
+        additional_images = []
+        if 'additional_images' in files:
+            additional_files = files.getlist('additional_images')
+            for file in additional_files:
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join('./uploads/additional', filename)
+                    os.makedirs('./uploads/additional', exist_ok=True)
+                    file.save(file_path)
+                    additional_images.append(file_path)
+
+        if additional_images:
+            update_data['additional_images'] = ','.join(additional_images)
 
         if not update_data:
             return jsonify({'error': 'No data provided for update'}), 400
 
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        # Get existing product data
+        cursor.execute("SELECT product_thumbnail, additional_images FROM add_product WHERE pid = %s", (pid,))
+        existing_product = cursor.fetchone()
+
+        if not existing_product:
+            return jsonify({'error': 'Product not found'}), 404
+
+        if product_thumbnail and product_thumbnail.filename and existing_product['product_thumbnail']:
+            old_thumbnail = existing_product['product_thumbnail']
+            if os.path.exists(old_thumbnail):
+                try:
+                    os.remove(old_thumbnail)
+                except Exception as e:
+                    print(f"Error deleting old thumbnail: {str(e)}")
+
+        if additional_images and existing_product['additional_images']:
+            try:
+                old_images = json.loads(existing_product['additional_images']) if existing_product['additional_images'] else []
+                for old_image in old_images:
+                    if os.path.exists(old_image):
+                        try:
+                            os.remove(old_image)
+                        except Exception as e:
+                            print(f"Error deleting old additional image: {str(e)}")
+            except json.JSONDecodeError as e:
+                print(f"Error parsing existing additional_images: {str(e)}")
 
         set_clauses = []
         values = []
@@ -507,8 +600,6 @@ def edit_product(pid):
                 values.append(value)
 
         values.append(pid)
-        print("set_clauses:", set_clauses)
-        print("values:", values)
 
         query = f"""
             UPDATE add_product
@@ -516,21 +607,21 @@ def edit_product(pid):
             WHERE pid = %s
             RETURNING *;
         """
-        print("Executing query:", query)
+
 
         cursor.execute(query, tuple(values))
         updated_product = cursor.fetchone()
-        print("Updated Product:", updated_product)
-
         conn.commit()
 
-        if not updated_product:
-            return jsonify({'error': 'Product not found'}), 404
-
-        return jsonify({'message': 'Product updated successfully', 'product': updated_product}), 200
+        return jsonify({
+            'message': 'Product updated successfully',
+            'product': updated_product
+        }), 200
 
     except Exception as e:
         print("Error:", str(e))
+        if conn:
+            conn.rollback()
         return jsonify({'error': 'Failed to update product'}), 500
 
     finally:
@@ -558,13 +649,15 @@ def admin_manufacture_list():
                 "company_name": item["company_name"],
                 "bank_name": item["bank_name"],
                 "branch_ifsc_code": item["branch_ifsc_code"],
-                "profile":f'{item["profile_picture_path"]}'.replace("./","") if item["profile_picture_path"] else None,
+                "profile": f'{item["profile_picture_path"]}'.replace("./", "") if item[
+                    "profile_picture_path"] else None,
                 "total_products": 0,
                 "total_current_quantity": 0,
                 "products": []
             }
         result[userid]["total_products"] += 1
-        result[userid]["total_current_quantity"] += item["current_stock_qty"] if item["current_stock_qty"] is not None else 0
+        result[userid]["total_current_quantity"] += item["current_stock_qty"] if item[
+                                                                                     "current_stock_qty"] is not None else 0
 
         result[userid]["products"].append({
             "product_name": item["product_name"],
@@ -573,12 +666,15 @@ def admin_manufacture_list():
             "product_description": item["product_description"],
             "unit_price": item["unit_price"],
             "current_stock_qty": item["current_stock_qty"],
-            "product_thumbnail":f'{item["product_thumbnail"]}'.replace("./","") if item["product_thumbnail"] else None,
+            "product_thumbnail": f'{item["product_thumbnail"]}'.replace("./", "") if item[
+                "product_thumbnail"] else None,
         })
 
     cursor.close()
     conn.close()
     return jsonify(list(result.values())), 200
+
+
 def logout():
     session.pop('token', None)
     session.pop('user_id', None)

@@ -18,7 +18,7 @@ def verify_user(username, password):
     try:
         with con.cursor() as cur:
             cur.execute(
-                "SELECT id, password FROM users WHERE email = %s ",
+                "SELECT id, password FROM seller_users WHERE email = %s ",
                 (username.strip(),)
             )
             result = cur.fetchone()
@@ -48,7 +48,7 @@ def create():
     con = get_db_connection()
     cursor = con.cursor()
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users(
+    CREATE TABLE IF NOT EXISTS seller_users(
         id SERIAL PRIMARY KEY,
         first_name TEXT NOT NULL,
         last_name  TEXT Default NULL,
@@ -62,7 +62,7 @@ def create():
 
    Create table if not exists dashboard(
    userid int not null,
-   FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
+   FOREIGN KEY (userid) REFERENCES seller_users(id) ON DELETE CASCADE,
    total_order Int Default Null,
    Total_stores Int  Default Null,
    Total_products Int  Default Null,
@@ -84,7 +84,7 @@ def create():
    
    Create table if not exists Seller_Registation(
     userid int not null,
-    FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (userid) REFERENCES seller_users(id) ON DELETE CASCADE,
     name VARCHAR(255),
     dob DATE,
     country VARCHAR(100),
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS add_product (
     meta_title VARCHAR(255) DEFAULT NULL,             
     meta_description TEXT DEFAULT NULL,  
 
-    FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (userid) REFERENCES seller_users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS admin_users(
@@ -168,7 +168,18 @@ CREATE TABLE IF NOT EXISTS customer_ticket (
    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
 );
-    
+
+CREATE TABLE IF NOT EXISTS product_selling (
+    pid SERIAL PRIMARY KEY,
+    id INT NOT NULL,
+    FOREIGN KEY (id) REFERENCES add_product(pid) ON DELETE CASCADE,
+    featured_deal BOOLEAN DEFAULT FALSE,
+    best_selling INT DEFAULT 0, -- Number of times added to cart
+    top_selling INT DEFAULT 0,  -- Number of times sold in the last 3 months
+    top_rating NUMERIC(2, 1) DEFAULT 0, -- Average rating (e.g., 4.5 out of 5)
+    rating_count INT DEFAULT 0, -- Total number of ratings
+    new_arrival DATE DEFAULT CURRENT_DATE
+);
    ''')
     con.commit()
 

@@ -41,42 +41,26 @@ def validate_token(token):
 
 
 def token_required(f):
-
     @wraps(f)
     def decorated_function(*args, **kwargs):
         token = None
 
         auth_header = request.headers.get('Authorization')
-        if auth_header:
-            try:
-                token = auth_header.split(' ')[1] if len(auth_header.split(' ')) > 1 else None
-            except Exception as e:
-                print(f"Authorization Header Error: {e}")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(' ')[1]
 
         if not token:
             token = session.get('token')
 
         if not token:
-            print("No token found")
-            return jsonify({
-                'error': 'Authentication token is missing',
-                'details': {
-                    'headers': dict(request.headers),
-                    'session': dict(session)
-                }
-            }), 401
+            return jsonify({'error': 'Authentication token is missing'}), 401
 
-        # Validate the token
+        if not isinstance(token, str) or '.' not in token:
+            return jsonify({'error': 'Invalid token format'}), 401
+
         decoded_token = validate_token(token)
         if not decoded_token:
-            print("Token validation failed")
-            return jsonify({
-                'error': 'Invalid or expired token',
-                'details': {
-                    'headers': dict(request.headers),
-                    'session': dict(session)
-                }
-            }), 401
+            return jsonify({'error': 'Invalid or expired token'}), 401
 
         request.token_payload = decoded_token
 

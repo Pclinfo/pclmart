@@ -1,16 +1,17 @@
 from flask import Blueprint, send_from_directory
 from app.auth import register, login, admin_login, check_session, user, handle_seller_registration, add_product, logout
-from app.auth import edit_product, delete_product, admin_product_details, product_details, admin_manufacture_list
+from app.auth import edit_product, delete_product, admin_product_details, product_details, product_detail_id,admin_manufacture_list
 from app.models import get_dashboard_data
 from flask_cors import cross_origin
 from app.authTokens import token_required
 from app.users.login import user_login, user_login_id, user_register, user_product_details, get_single_product_details
 from app.users.login import user_profile_edit, create_ticket,view_ticket ,delete_ticket
-from app.users.address import address,address_view
+from app.users.address import address,address_view,address_delete,edit_address
 import os
 from app.admin.database import create
 from app.admin.auth import toggle_product_status, toggle_product_featured, get_product_status
-
+from app.users.product import new_arrivals,best_selling,get_top_selling,add_rating,add_to_cart,get_featured_deals, set_featured,get_user_orders
+from app.users.product import order_insert
 blueprint = Blueprint('routes', __name__)
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -61,11 +62,20 @@ def admin_product_detail_route():
     return admin_product_details()
 
 
+
+
 @blueprint.route('/product_details/', methods=['GET', 'POST'])
 @token_required
 @cross_origin()
 def get_product_detail():
     return product_details()
+
+
+@blueprint.route('/product_detail/<int:pid>', methods=['GET', 'POST'])
+@token_required
+@cross_origin()
+def product_detail_route(pid):
+    return product_detail_id(pid)
 
 
 @blueprint.route('/uploads/<path:filename>', methods=['GET', 'POST'])
@@ -78,7 +88,9 @@ def delete_product_route(pid):
     return delete_product(pid)
 
 
-@blueprint.route('/edit_product/<int:pid>', methods=['PATCH'])
+@blueprint.route('/edit-product/<int:pid>', methods=['PATCH'])
+@cross_origin()
+@token_required
 def edit_product_route(pid):
     return edit_product(pid)
 
@@ -173,5 +185,57 @@ def add_address_route():
 @blueprint.route('/user-address', methods=['GET', 'POST'])
 @cross_origin()
 @token_required
-def add_address_id_route():
+def user_address_id_route():
     return address_view()
+
+@blueprint.route('/delete-address/<int:id>', methods=['GET', 'POST'])
+@cross_origin()
+def delete_address_route(id):
+    return address_delete(id)
+
+@blueprint.route('/edit-address/<int:id>', methods=['GET', 'POST'])
+@cross_origin()
+@token_required
+def edit_address_route(id):
+    return edit_address(id)
+
+@blueprint.route('/new_arrivals', methods=['GET', 'POST'])
+def new_arrivals_route():
+    return new_arrivals()
+
+@blueprint.route('/best_selling', methods=['GET', 'POST'])
+def best_selling_route():
+    return best_selling()
+
+@blueprint.route('/top_selling', methods=['GET', 'POST'])
+def top_selling_route():
+    return get_top_selling()
+
+@blueprint.route('/add_rating', methods=['POST'])
+def add_rating_route():
+    return add_rating()
+
+@blueprint.route('/add_to_cart', methods=['POST'])
+def add_to_cart_route():
+    return add_to_cart()
+
+
+@blueprint.route('/get_featured_deals', methods=['GET'])
+def get_featured_deals_route():
+    return get_featured_deals()
+
+@blueprint.route('/set_featured', methods=['POST'])
+def set_featured_route():
+    return set_featured()
+
+@blueprint.route('/orders', methods=['GET','POST'])
+@token_required
+@cross_origin()
+def get_user_orders_route():
+    return get_user_orders()
+
+@blueprint.route('/insert_order',methods=['GET','POST'])
+@token_required
+@cross_origin()
+def order_insert_route(I):
+    return order_insert()
