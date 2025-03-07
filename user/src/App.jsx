@@ -2,6 +2,8 @@ import React, { useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthContext, { AuthProvider } from './context/AuthContext';
 
+import Footer from './pages/Footer';
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -18,6 +20,14 @@ import Coupons from './pages/Coupons'
 import TrackOrder from './pages/TrackOrder'
 import ProductView from './pages/ProductView';
 import CheckOut from './pages/CheckOut';
+
+import TermsConditions from './pages/TermsConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import RefundPolicy from './pages/RefundPolicy';
+import ReturnPolicy from './pages/ReturnPolicy';
+import CancellationPolicy from './pages/CancellationPolicy';
+import ShippingPolicy from './pages/ShippingPolicy';
+
 
 
 
@@ -69,6 +79,15 @@ const AppRoutes = () => {
       <Route path="/checkout" element={<CheckOut />} />
 
 
+      <Route path="/terms-conditions" element={<TermsConditions />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/refund-policy" element={<RefundPolicy />} />
+      <Route path="/return-policy" element={<ReturnPolicy />} />
+      <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+      <Route path="/shipping-policy" element={<ShippingPolicy />} />
+
+
+
       {/* 404 Route */}
       <Route
         path="*"
@@ -87,6 +106,7 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
+        <Footer />
       </AuthProvider>
     </BrowserRouter>
   );

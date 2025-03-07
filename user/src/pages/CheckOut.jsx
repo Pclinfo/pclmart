@@ -189,45 +189,99 @@ const CheckOut = () => {
             alert('Please select a payment method');
             return;
         }
-    
+
+        if (!selectedAddress) {
+            alert('Please select a delivery address');
+            return;
+        }
+
+        if (!user || !user.token) {
+            alert('Please log in to place an order');
+            return;
+        }
+
         try {
-            const selectedAddressDetails = addresses.find(addr => addr.id === selectedAddress);
-            if (!selectedAddressDetails) {
-                alert('Please select a delivery address');
+            // Find the selected address details
+            const shippingAddress = addresses.find(addr => addr.id === selectedAddress);
+            if (!shippingAddress) {
+                alert('Invalid shipping address');
                 return;
             }
-    
-            // Create order data payload
-            const paymentData = {
-                addressId: selectedAddress,
-                items: checkoutItems,
-                paymentMethod: selectedPaymentMethod,
-                total: orderSummary.total,
-                shippingAddress: selectedAddressDetails
+
+            // Calculate subtotal before platform fee
+            const subtotal = checkoutItems.reduce((acc, item) =>
+                acc + (parseFloat(item.unit_price) * item.quantity), 0
+            );
+
+            // Prepare the order payload with all necessary details for Orders display
+            const orderPayload = {
+                items: checkoutItems.map(item => ({
+                    product_id: item.product_id,
+                    seller_id: item.seller_id || null,
+                    quantity: item.quantity,
+                    unit_price: parseFloat(item.unit_price),
+                    product_name: item.product_name,
+                    product_thumbnail: item.product_thumbnail
+                })),
+                shipping_address_id: selectedAddress,
+                shipping_address: {
+                    name: shippingAddress.name,
+                    address: shippingAddress.address,
+                    locality: shippingAddress.locality,
+                    state: shippingAddress.state,
+                    pincode: shippingAddress.pincode,
+                    phone_number: shippingAddress.phone_number,
+                    alternate_phone: shippingAddress.alternate_phone
+                },
+                payment_method: selectedPaymentMethod,
+                subtotal: subtotal,
+                platform_fee: orderSummary.platformFee,
+                shipping: 0, // Free shipping
+                discount: 0, // Add discount logic if needed
+                total_amount: orderSummary.total,
+                status: 'processing', // Initial status
+                order_date: new Date().toISOString()
             };
-    
-            // Send order creation request
-            const response = await axios.post(`${config.apiUrl}/create-order`, paymentData, {
+
+            // Send order to backend
+            const response = await axios.post(`${config.apiUrl}/insert_order`, orderPayload, {
                 headers: {
-                    Authorization: `Bearer ${user.token}`
+                    'Authorization': `Bearer ${user.token}`,
+                    'Content-Type': 'application/json'
                 }
             });
-    
-            // Mark payment step as complete
-            completeStep(4);
-            
-            // Navigate to order confirmation with the new order ID
-            navigate('/order-confirmation', {
-                state: {
-                    orderId: response.data.orderId
-                }
-            });
+
+            // Check for successful order creation
+            if (response.data && response.data.order_id) {
+                // Mark payment step as complete
+                completeStep(4);
+
+                // Navigate to orders page with success message and order details
+                navigate('/orders', {
+                    state: {
+                        success: true,
+                        message: 'Order placed successfully!',
+                        newOrderId: response.data.order_id,
+                        paymentMethod: selectedPaymentMethod
+                    }
+                });
+            } else {
+                throw new Error('Order creation failed');
+            }
         } catch (error) {
-            console.error('Payment error:', error);
-            alert('Payment failed. Please try again.');
+            console.error('Order placement error:', error);
+
+            if (error.response) {
+                alert(error.response.data.message || 'Order placement failed. Please try again.');
+            } else if (error.request) {
+                alert('No response from server. Please check your internet connection.');
+            } else {
+                alert('An unexpected error occurred. Please try again.');
+            }
         }
     };
-    
+
+
     // Helper function for image URLs
     const getFullImageUrl = (url) => {
         if (!url) return '/api/placeholder/100/100';

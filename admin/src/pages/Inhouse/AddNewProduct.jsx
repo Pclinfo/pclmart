@@ -22,7 +22,7 @@ const AddNewProduct = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [additionalImagePreview, setAdditionalImagePreview] = useState(null);
   const [formData, setFormData] = useState({
-    // Product Information
+  
 
     productName: '',
     productDescription: '',

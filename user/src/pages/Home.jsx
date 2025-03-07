@@ -8,6 +8,7 @@ import Bestselling from '../components/Bestselling'
 import TopSelling from '../components/TopSelling'
 import TopRating from '../components/TopRating'
 
+
 const Home = () => {
   return (
     <div>
@@ -15,11 +16,10 @@ const Home = () => {
       < Hero />
       <Category />
       <LatestProducts />
-      <NewArrivals />
       <Bestselling />
       <TopSelling />
       <TopRating />
-    </div>  
+    </div>
   )
 }
 

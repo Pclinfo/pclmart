@@ -141,7 +141,7 @@ const Profile = () => {
             }
 
             const response = await fetch(`${config.apiUrl}/update-profile`, {
-                method: 'POST',
+                method: 'post',
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

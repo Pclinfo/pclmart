@@ -58,7 +58,7 @@ const ProductList = () => {
 
       // Prepare axios configuration with enhanced error handling
       const axiosConfig = {
-        method: 'get',
+        method: 'POST',
         url: `${config.apiUrl}/product_details`,
         headers: {
           'Authorization': `Bearer ${token}`,

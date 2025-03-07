@@ -42,7 +42,7 @@ const Pos = () => {
       const token = getToken();
 
       const axiosConfig = {
-        method: 'get',
+        method: 'post',
         url: `${config.apiUrl}/product_details`,
         headers: {
           'Authorization': `Bearer ${token}`,

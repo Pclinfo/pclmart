@@ -4,18 +4,17 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import AuthContext from '../context/AuthContext';
 import { Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import config from '../pages/config';
 
-
-// Separate OrderCard component
 const OrderCard = ({ order, isNewOrder }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Auto-expand if this is a new order
   useEffect(() => {
     if (isNewOrder) {
       setIsExpanded(true);
     }
   }, [isNewOrder]);
+
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -30,6 +29,7 @@ const OrderCard = ({ order, isNewOrder }) => {
     }
   };
 
+
   const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {
       case 'delivered':
@@ -43,6 +43,7 @@ const OrderCard = ({ order, isNewOrder }) => {
     }
   };
 
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -52,6 +53,7 @@ const OrderCard = ({ order, isNewOrder }) => {
       minute: '2-digit'
     });
   };
+
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border p-4 mb-4 ${isNewOrder ? 'ring-2 ring-blue-500' : ''
@@ -166,6 +168,7 @@ const SuccessNotification = ({ message, onClose }) => (
   </div>
 );
 
+
 // Main Orders Component
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -185,6 +188,7 @@ const Orders = () => {
 
     try {
       const response = await fetch(`${config.apiUrl}/orders`, {
+        method: 'post',
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -195,7 +199,11 @@ const Orders = () => {
       }
 
       const data = await response.json();
-      setOrders(data.orders);
+      // Sort orders by date, newest first
+      const sortedOrders = data.orders.sort((a, b) =>
+        new Date(b.orderDate) - new Date(a.orderDate)
+      );
+      setOrders(sortedOrders);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -210,14 +218,16 @@ const Orders = () => {
   useEffect(() => {
     if (location.state?.success) {
       setShowNotification(true);
-      setNotificationMessage(location.state.message);
+      setNotificationMessage(location.state.message || 'Order placed successfully!');
+      // Refresh orders to include the new order
+      fetchOrders();
       // Clear the state after showing notification
       window.history.replaceState({}, document.title);
       // Hide notification after 5 seconds
       const timer = setTimeout(() => setShowNotification(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [location]);
+  }, [location.state]);
 
   const isNewOrder = (orderId) => {
     return location.state?.newOrder === orderId;

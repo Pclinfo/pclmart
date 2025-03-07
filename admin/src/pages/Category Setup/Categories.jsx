@@ -12,11 +12,11 @@ const Categories = () => {
         <Sidebar setActiveContent={setActiveContent} />
         <div className="flex-1 p-4">
           {activeContent}
-          
+
         </div>
       </div>
     </div>
   );
 };
 
-export default Categories ;
+export default Categories;

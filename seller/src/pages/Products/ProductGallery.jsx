@@ -9,34 +9,33 @@ const ProductGallery = () => {
   const [activeContent, setActiveContent] = useState(' ');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
+
+  // Image loading state management
+  const handleImageError = (productId) => {
+    setImageLoadErrors(prev => new Set([...prev, productId]));
+  };
 
   const fetchProducts = async () => {
     try {
-      // Reset error state and start loading
       setError(null);
       setLoading(true);
 
-      // Enhanced token retrieval with multiple fallback methods
       const getToken = () => {
-        // Check localStorage first
         const localToken = localStorage.getItem('token');
         if (localToken) return localToken;
 
-        // Then check sessionStorage
         const sessionToken = sessionStorage.getItem('token');
         if (sessionToken) return sessionToken;
 
-        // If no token found, log and throw an error
         console.warn('No authentication token found');
         throw new Error('Authentication token is missing');
       };
 
-      // Get token for authorization
       const token = getToken();
 
-      // Prepare axios configuration with enhanced error handling
       const axiosConfig = {
-        method: 'get',
+        method: 'post',
         url: `${config.apiUrl}/product_details`,
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -51,34 +50,42 @@ const ProductGallery = () => {
         withCredentials: false
       };
 
-      // Make the API call with additional error prevention
       const response = await axios(axiosConfig);
 
-      // Validate response more robustly
       if (!response.data || !Array.isArray(response.data.products)) {
         throw new Error('Invalid response format: Expected an array of products');
       }
 
-      // Process products with comprehensive error handling
       const processedProducts = response.data.products.map(product => {
         try {
-          // Default values and sanitization
-          let thumbnailUrl = '/default-product-image.png';
+          const defaultImage = '/default-product-image.png';
+          let thumbnailUrl = defaultImage;
 
-          // Process thumbnail URL with multiple fallback mechanisms
           if (product.product_thumbnail) {
-            const cleanedThumbnailPath = product.product_thumbnail
-              .replace(/^\.\//, '') // Remove leading './'
-              .replace(/^\/\//, '/') // Replace double slashes with single slash
-              .trim(); // Remove any whitespace
+            // Handle various URL formats
+            const cleanedUrl = product.product_thumbnail
+              .replace(/^\.\//, '')
+              .replace(/^\/\//, '/')
+              .trim();
 
-            // Construct full URL with error prevention
-            thumbnailUrl = cleanedThumbnailPath.startsWith('http')
-              ? cleanedThumbnailPath
-              : `${config.apiUrl}${cleanedThumbnailPath}`;
+            // Ensure URL is absolute
+            if (cleanedUrl.startsWith('http')) {
+              thumbnailUrl = cleanedUrl;
+            } else if (cleanedUrl.startsWith('/')) {
+              thumbnailUrl = `${config.apiUrl}${cleanedUrl}`;
+            } else {
+              thumbnailUrl = `${config.apiUrl}/${cleanedUrl}`;
+            }
+
+            // Validate URL
+            try {
+              new URL(thumbnailUrl);
+            } catch {
+              console.warn(`Invalid URL for product ${product.pid}: ${thumbnailUrl}`);
+              thumbnailUrl = defaultImage;
+            }
           }
 
-          // Comprehensive product object creation with default values
           return {
             ...product,
             product_name: product.product_name || 'Unnamed Product',
@@ -89,15 +96,12 @@ const ProductGallery = () => {
             product_description: product.product_description || 'No description available',
             unit_price: Number(product.unit_price) || 0,
             verify_status: product.verify_status || 'Not Verified',
-            active_status: product.active_status !== undefined
-              ? product.active_status
-              : false,
+            active_status: product.active_status !== undefined ? product.active_status : false,
             product_thumbnail: thumbnailUrl,
-            pid: product.pid || product.id || Date.now() // Fallback unique identifier
+            pid: product.pid || product.id || Date.now()
           };
         } catch (productProcessingError) {
           console.error('Error processing individual product:', productProcessingError);
-          // Return a minimal safe object if processing fails
           return {
             pid: Date.now(),
             product_name: 'Processing Error',
@@ -106,29 +110,16 @@ const ProductGallery = () => {
         }
       });
 
-      // Update state with processed products
       setProducts(processedProducts);
-
-      // Optional: Log successful fetch
-      console.log(`Successfully fetched ${processedProducts.length} products`);
+      setImageLoadErrors(new Set()); // Reset image errors on successful fetch
 
     } catch (error) {
-      // Comprehensive error handling
       console.error('Products Fetch Error:', error);
 
-      // Detailed error type checking
       if (error.response) {
-        console.error('Server Response Error:', {
-          data: error.response.data,
-          status: error.response.status,
-          headers: error.response.headers
-        });
-
-        // Specific error messages based on status
         switch (error.response.status) {
           case 401:
             setError('Authentication failed. Please log in again.');
-            // Clear tokens
             localStorage.removeItem('token');
             sessionStorage.removeItem('token');
             break;
@@ -145,35 +136,23 @@ const ProductGallery = () => {
             setError('An unexpected error occurred while fetching products.');
         }
       } else if (error.request) {
-        console.error('No Response Received:', error.request);
-
-        if (error.code === 'ECONNABORTED') {
-          setError('Request timed out. Please check your network connection.');
-        } else if (error.message.includes('Network Error')) {
-          setError('Unable to connect to the server. Please check your network or server status.');
-        } else {
-          setError('No response from server. Please check your network connection.');
-        }
+        setError(error.code === 'ECONNABORTED'
+          ? 'Request timed out. Please check your network connection.'
+          : 'No response from server. Please check your network connection.');
       } else {
-        console.error('Request Setup Error:', error.message);
         setError(`Request error: ${error.message}`);
       }
 
-      // Clear products on error
       setProducts([]);
-
     } finally {
-      // Ensure loading is set to false regardless of success or failure
       setLoading(false);
     }
   };
 
-  // Trigger fetch on component mount
   useEffect(() => {
     fetchProducts();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // Render Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -185,7 +164,6 @@ const ProductGallery = () => {
     );
   }
 
-  // Render Error State
   if (error) {
     return (
       <div className="min-h-screen bg-red-50 flex items-center justify-center">
@@ -207,24 +185,27 @@ const ProductGallery = () => {
 
           <div className="container mx-auto px-4 py-8">
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
-              {/* Product Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                 {products.map((product) => (
                   <div
                     key={product.pid}
-                    className="bg-gray-100 rounded-lg overflow-hidden shadow-md"
+                    className="bg-gray-100 rounded-lg overflow-hidden shadow-md transition-transform hover:scale-105"
                   >
                     <div className="p-4">
-                      <div className="mb-4 overflow-hidden relative h-34">
-                        <img
-                          src={product.product_thumbnail}
-                          alt={product.product_name}
-                          className="w-full h-28 object-contain"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/default-product-image.png';
-                          }}
-                        />
+                      <div className="mb-4 overflow-hidden relative h-48 bg-white rounded-lg flex items-center justify-center">
+                        {imageLoadErrors.has(product.pid) ? (
+                          <div className="text-center p-4">
+                            <p className="text-gray-500">Image not available</p>
+                          </div>
+                        ) : (
+                          <img
+                            src={product.product_thumbnail}
+                            alt={product.product_name}
+                            className="w-full h-full object-contain"
+                            onError={() => handleImageError(product.pid)}
+                            loading="lazy"
+                          />
+                        )}
                       </div>
 
                       <div className="space-y-2">
@@ -244,7 +225,6 @@ const ProductGallery = () => {
                 ))}
               </div>
 
-              {/* No Products Found */}
               {products.length === 0 && (
                 <div className="text-center py-8 bg-gray-50">
                   <p className="text-gray-600">No products found</p>

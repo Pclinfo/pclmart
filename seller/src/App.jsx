@@ -55,6 +55,9 @@ import OrderReport from './pages/Reports/OrderReport';
 import Withdraws from './pages/Business/Withdraws';
 import BankInformation from './pages/Business/BankInformation';
 import ShopSettings from './pages/Business/ShopSettings';
+import UpdateShopSettings from './pages/Business/UpdateShopSettings';
+import EditBankInfo from './pages/Business/EditBankInfo';
+  
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -158,7 +161,10 @@ const AppRoutes = () => {
       <Route path="/order-report" element={<ProtectedRoute><OrderReport /></ProtectedRoute>} />
       <Route path="/withdraws" element={<ProtectedRoute><Withdraws /></ProtectedRoute>} />
       <Route path="/bank-information" element={<ProtectedRoute><BankInformation /></ProtectedRoute>} />
+      <Route path="/edit-bank-info" element={<ProtectedRoute><EditBankInfo /></ProtectedRoute>} />
       <Route path="/shop-settings" element={<ProtectedRoute><ShopSettings /></ProtectedRoute>} />
+      <Route path="/update-shop-settings" element={<ProtectedRoute><UpdateShopSettings /></ProtectedRoute>} />
+
 
       {/* Root and Fallback Routes */}
       <Route

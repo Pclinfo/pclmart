@@ -241,8 +241,8 @@ const Category = () => {
                 key={category.id}
                 className="flex-none w-full"
               >
-                <h3 className="font-medium text-xl text-gray-800 mb-6">{category.title}</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <h3 className="font-semibold text-xl text-gray-800 mb-6 text-center">{category.title}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-12">
                   {category.items.map((item, index) => (
                     <div
                       key={index}

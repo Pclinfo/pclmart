@@ -55,6 +55,7 @@ import DeniedProducts from './pages/Manufacturer/DeniedProducts'
 //Product Gallery Pages 
 import Gallery from './pages/Product Gallery/Gallery'
 
+import BannerSetup from './pages/BannerSetup';
 
 // Offer Deals Pages
 import Coupon from './pages/Offer Deal/Coupon'
@@ -119,6 +120,14 @@ import Index from './pages/HelpSupport/Index'
 import Messages from './pages/HelpSupport/Messages';
 import AdminSupportTicket from './pages/HelpSupport/AdminSupportTicket';
 
+
+
+
+import General from './pages/Business Setup/General';
+import PaymentOptions from './pages/Business Setup/PaymentOptions';
+
+
+import Subscribers from './pages/Subscribers';
 
 
 
@@ -228,6 +237,8 @@ const AppRoutes = () => {
       {/* Product Gallery Routes */}
       <Route path="/productgallery/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
 
+      <Route path="/banner-setup" element={<ProtectedRoute><BannerSetup /></ProtectedRoute>} />
+
       {/* Offer Deals Routes */}
       <Route path="/offerdeal/coupon" element={<ProtectedRoute><Coupon /></ProtectedRoute>} />
       <Route path="/offerdeal/flash-deals" element={<ProtectedRoute><FlashDeals /></ProtectedRoute>} />
@@ -286,6 +297,11 @@ const AppRoutes = () => {
       <Route path="/pagesmedia/social-media-links" element={<ProtectedRoute><SocialMediaLinks /></ProtectedRoute>} />
       <Route path="/pagesmedia/media-gallery" element={<ProtectedRoute><MediaGallery /></ProtectedRoute>} />
       <Route path="/pagesmedia/manufacturer-registration" element={<ProtectedRoute><ManufacturerRegistration /></ProtectedRoute>} />
+
+      <Route path="/subscribers" element={<ProtectedRoute><Subscribers /></ProtectedRoute>} />
+
+      <Route path="/business-setup/general" element={<ProtectedRoute><General /></ProtectedRoute>} />
+      <Route path="/business-setup/payment-options" element={<ProtectedRoute><PaymentOptions /></ProtectedRoute>} />
 
 
       <Route

@@ -62,7 +62,7 @@ const NewProductsRequest = () => {
       const token = getToken();
 
       const axiosConfig = {
-        method: 'get',
+        method: 'post',
         url: `${config.apiUrl}/admin_product_details`,
         headers: {
           'Authorization': `Bearer ${token}`,
