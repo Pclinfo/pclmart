@@ -30,7 +30,7 @@ def register():
         if cursor.fetchone():
             return jsonify({"error": "User already exists"}), 400
 
-        cursor.execute("INSERT INTO seller_users (name, email, password) VALUES (%s, %s, %s)",
+        cursor.execute("INSERT INTO seller_users (first_name, email, password) VALUES (%s, %s, %s)",
                        (name, email, hashed_password))
         conn.commit()
         return jsonify({"message": "Registration successful"}), 201
@@ -155,164 +155,131 @@ def user(user_id):
         if connection:
             connection.close()
 
-
 def handle_seller_registration():
     conn = get_db_connection()
     cursor = conn.cursor() if conn else None
+    try:
+        data = request.form.to_dict()
+        files = request.files
 
-    if request.method == "POST":
-        try:
-            data = request.form.to_dict()
-            files = request.files
+        token_payload = getattr(request, 'token_payload', None)
 
-            token_payload = getattr(request, 'token_payload', None)
+        if token_payload:
+            userid = token_payload.get('user_id')
+        elif session.get('user'):
+            userid = session.get('user')
+        else:
+            userid = escape(data.get('user'))
 
-            if token_payload:
-                userid = token_payload.get('user_id')
-            elif session.get('user'):
-                userid = session.get('user')
-            else:
-                userid = escape(data.get('user'))
+        cursor.execute("SELECT * FROM Seller_Registation WHERE userid = %s", (userid,))
+        existing_user = cursor.fetchone()
 
-            cursor.execute("SELECT * FROM Seller_Registation WHERE userid = %s", (userid,))
-            existing_user = cursor.fetchone()
-
+        if request.method == 'GET':
             if existing_user:
-                user_data = {
-                    "userid": existing_user[0],
-                    "name": existing_user[1],
-                    "dob": existing_user[2],
-                    "country": existing_user[3],
-                    "state": existing_user[4],
-                    "place": existing_user[5],
-                    "mobile_no": existing_user[6],
-                    "email": existing_user[7],
-                    "profile_picture_path": existing_user[8],
-                    "company_name": existing_user[9],
-                    "official_mobile_no": existing_user[10],
-                    "official_email": existing_user[11],
-                    "certificate_path": existing_user[12],
-                    "bank_name": existing_user[13],
-                    "branch_ifsc_code": existing_user[14],
-                    "account_holder_name": existing_user[15],
-                    "account_number": existing_user[16],
-                    "swift_bic": existing_user[17],
-                    "upi_id": existing_user[18],
-                    "paypal_email": existing_user[19],
-                    "payment_terms_accepted": existing_user[20],
-                    "ie_code": existing_user[21],
-                    "ie_certificate_path": existing_user[22],
-                    "exporter_terms_accepted": existing_user[23]
-                }
-                return jsonify({"message": "User already exists", "user_data": user_data}), 200
-            name = escape(data.get('fullName'))
-            dob = escape(data.get('dob'))
-            country = escape(data.get('country'))
-            state = escape(data.get('state'))
-            place = escape(data.get('place'))
-            mobile_no = escape(data.get('mobileNo'))
-            email = escape(data.get('email'))
+                user_data = {column.name: existing_user[i] for i, column in enumerate(cursor.description)}
+                return jsonify({"message": "User data retrieved", "user_data": user_data}), 200
+            return jsonify({"message": "User not found"}), 404
 
-            profile = files.get('profilePicture')
-            profile_filepath = None
-            if profile and profile.filename:
-                filename = secure_filename(profile.filename)
-                profile_filepath = os.path.join('./uploads/profile', filename)
-                os.makedirs('./uploads/profile', exist_ok=True)
-                profile.save(profile_filepath)
+        name = escape(data.get('fullName'))
+        dob = escape(data.get('dob'))
+        country = escape(data.get('country'))
+        state = escape(data.get('state'))
+        place = escape(data.get('place'))
+        mobile_no = escape(data.get('mobileNo'))
+        email = escape(data.get('email'))
 
-            company_name = escape(data.get('companyName'))
-            official_mobile_no = escape(data.get('officialMobileNo'))
-            official_email = escape(data.get('officialEmail'))
+        profile = files.get('profilePicture')
+        profile_filepath = existing_user[8] if existing_user else None
+        if profile and profile.filename:
+            filename = secure_filename(profile.filename)
+            profile_filepath = os.path.join('./uploads/profile', filename)
+            os.makedirs('./uploads/profile', exist_ok=True)
+            profile.save(profile_filepath)
 
-            certificate_upload = files.get('certificateUpload')
-            certificate_filepath = None
-            if certificate_upload and certificate_upload.filename:
-                filename = secure_filename(certificate_upload.filename)
-                certificate_filepath = os.path.join('./uploads/certificate', filename)
-                os.makedirs('./uploads/certificate', exist_ok=True)
-                certificate_upload.save(certificate_filepath)
+        company_name = escape(data.get('companyName'))
+        official_mobile_no = escape(data.get('officialMobileNo'))
+        official_email = escape(data.get('officialEmail'))
 
-            bank_name = escape(data.get('bankName'))
-            branch_ifsc_code = escape(data.get('branchIFSCCode'))
-            account_holder_name = escape(data.get('accountHolderName'))
-            account_number = escape(data.get('accountNumber'))
-            swift_bic = escape(data.get('swiftBIC'))
-            upi_id = escape(data.get('upiId'))
-            paypal = escape(data.get('payPal'))
-            payment_terms_accepted = bool(data.get('paymentTermsAccepted'))
+        certificate_upload = files.get('certificateUpload')
+        certificate_filepath = existing_user[12] if existing_user else None
+        if certificate_upload and certificate_upload.filename:
+            filename = secure_filename(certificate_upload.filename)
+            certificate_filepath = os.path.join('./uploads/certificate', filename)
+            os.makedirs('./uploads/certificate', exist_ok=True)
+            certificate_upload.save(certificate_filepath)
 
-            ie_code = escape(data.get('ieCode'))
-            ie_certificate = files.get("ieCertificate")
-            ie_certificate_filepath = None
-            if ie_certificate and ie_certificate.filename:
-                filename = secure_filename(ie_certificate.filename)
-                ie_certificate_filepath = os.path.join('./uploads/IEC', filename)
-                os.makedirs('./uploads/IEC', exist_ok=True)
-                ie_certificate.save(ie_certificate_filepath)
+        bank_name = escape(data.get('bankName'))
+        branch_ifsc_code = escape(data.get('branchIFSCCode'))
+        account_holder_name = escape(data.get('accountHolderName'))
+        account_number = escape(data.get('accountNumber'))
+        swift_bic = escape(data.get('swiftBIC'))
+        upi_id = escape(data.get('upiId'))
+        paypal = escape(data.get('payPal'))
+        payment_terms_accepted = bool(data.get('paymentTermsAccepted'))
 
-            exporter_terms_accepted = bool(data.get('exporterTermsAccepted'))
+        ie_code = escape(data.get('ieCode'))
+        ie_certificate = files.get("ieCertificate")
+        ie_certificate_filepath = existing_user[22] if existing_user else None
+        if ie_certificate and ie_certificate.filename:
+            filename = secure_filename(ie_certificate.filename)
+            ie_certificate_filepath = os.path.join('./uploads/IEC', filename)
+            os.makedirs('./uploads/IEC', exist_ok=True)
+            ie_certificate.save(ie_certificate_filepath)
 
-            insert_query = """
-                    INSERT INTO Seller_Registation (
-                        userid,name, dob, country, state, place, mobile_no, email,
-                        profile_picture_path, company_name, official_mobile_no, official_email,
-                        certificate_path, bank_name, branch_ifsc_code,
-                        account_holder_name, account_number, swift_bic, upi_id, paypal_email,
-                        payment_terms_accepted, ie_code, ie_certificate_path, exporter_terms_accepted
-                    ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s
-                    )
-                """
-            cursor.execute(insert_query, (
-                userid, name, dob, country, state, place, mobile_no, email,
+        exporter_terms_accepted = bool(data.get('exporterTermsAccepted'))
+
+        if existing_user:
+            update_query = """
+                UPDATE Seller_Registation SET
+                    name=%s, dob=%s, country=%s, state=%s, place=%s, mobile_no=%s, email=%s,
+                    profile_picture_path=%s, company_name=%s, official_mobile_no=%s, official_email=%s,
+                    certificate_path=%s, bank_name=%s, branch_ifsc_code=%s,
+                    account_holder_name=%s, account_number=%s, swift_bic=%s, upi_id=%s, paypal_email=%s,
+                    payment_terms_accepted=%s, ie_code=%s, ie_certificate_path=%s, exporter_terms_accepted=%s
+                WHERE userid=%s
+            """
+            cursor.execute(update_query, (
+                name, dob, country, state, place, mobile_no, email,
                 profile_filepath, company_name, official_mobile_no, official_email,
                 certificate_filepath, bank_name, branch_ifsc_code,
                 account_holder_name, account_number, swift_bic, upi_id, paypal,
-                payment_terms_accepted, ie_code, ie_certificate_filepath, exporter_terms_accepted
+                payment_terms_accepted, ie_code, ie_certificate_filepath, exporter_terms_accepted,
+                userid
             ))
             conn.commit()
+            return jsonify({"message": "Seller information updated successfully"}), 200
 
-            registration_data = {
-                "userid": userid,
-                "name": name,
-                "dob": dob,
-                "country": country,
-                "state": state,
-                "place": place,
-                "mobile_no": mobile_no,
-                "email": email,
-                "profile_picture_path": profile_filepath,
-                "company_name": company_name,
-                "official_mobile_no": official_mobile_no,
-                "official_email": official_email,
-                "certificate_path": certificate_filepath,
-                "bank_name": bank_name,
-                "branch_ifsc_code": branch_ifsc_code,
-                "account_holder_name": account_holder_name,
-                "account_number": account_number,
-                "swift_bic": swift_bic,
-                "upi_id": upi_id,
-                "paypal_email": paypal,
-                "payment_terms_accepted": payment_terms_accepted,
-                "ie_code": ie_code,
-                "ie_certificate_path": ie_certificate_filepath,
-                "exporter_terms_accepted": exporter_terms_accepted
-            }
+        insert_query = """
+            INSERT INTO Seller_Registation (
+                userid, name, dob, country, state, place, mobile_no, email,
+                profile_picture_path, company_name, official_mobile_no, official_email,
+                certificate_path, bank_name, branch_ifsc_code,
+                account_holder_name, account_number, swift_bic, upi_id, paypal_email,
+                payment_terms_accepted, ie_code, ie_certificate_path, exporter_terms_accepted
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+        """
+        cursor.execute(insert_query, (
+            userid, name, dob, country, state, place, mobile_no, email,
+            profile_filepath, company_name, official_mobile_no, official_email,
+            certificate_filepath, bank_name, branch_ifsc_code,
+            account_holder_name, account_number, swift_bic, upi_id, paypal,
+            payment_terms_accepted, ie_code, ie_certificate_filepath, exporter_terms_accepted
+        ))
+        conn.commit()
+        return jsonify({"message": "Seller registration successful"}), 201
 
-            return jsonify({"message": "Seller registration successful", "registration_data": registration_data}), 201
-
-
-        except Exception as e:
-            print(f"Error during seller registration: {e}")
-            return jsonify({"error": "An error occurred during registration"}), 500
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+    except Exception as e:
+        print(f"Error during seller registration: {e}")
+        return jsonify({"error": "An error occurred during registration"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 def add_product():
@@ -539,7 +506,6 @@ def edit_product(pid):
         update_data = request.form.to_dict()
         files = request.files
 
-
         product_thumbnail = files.get('product_thumbnail')
         if product_thumbnail and product_thumbnail.filename:
             filename = secure_filename(product_thumbnail.filename)
@@ -582,7 +548,8 @@ def edit_product(pid):
 
         if additional_images and existing_product['additional_images']:
             try:
-                old_images = json.loads(existing_product['additional_images']) if existing_product['additional_images'] else []
+                old_images = json.loads(existing_product['additional_images']) if existing_product[
+                    'additional_images'] else []
                 for old_image in old_images:
                     if os.path.exists(old_image):
                         try:
@@ -608,7 +575,6 @@ def edit_product(pid):
             RETURNING *;
         """
 
-
         cursor.execute(query, tuple(values))
         updated_product = cursor.fetchone()
         conn.commit()
@@ -629,6 +595,7 @@ def edit_product(pid):
             cursor.close()
         if conn:
             conn.close()
+
 
 def admin_manufacture_list():
     conn = get_db_connection()
@@ -675,8 +642,10 @@ def admin_manufacture_list():
     return jsonify(list(result.values())), 200
 
 
+
 def logout():
     session.pop('token', None)
     session.pop('user_id', None)
     session.clear()
     return jsonify({'message': 'Logged out successfully'}), 200
+

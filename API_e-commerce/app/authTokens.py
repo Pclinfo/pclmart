@@ -3,40 +3,60 @@ from flask import request, session, jsonify
 from functools import wraps
 from datetime import datetime, timedelta
 
-SECRET_KEY = "pclinfo"
+# Use a more secure secret key in production
+SECRET_KEY = "pclinfo"  # Consider moving this to environment variables
+
 
 def generate_token(user_data, expiration_minutes=60):
-
-    payload = user_data.copy()
-    payload['exp'] = datetime.utcnow() + timedelta(minutes=expiration_minutes)
-    payload['iat'] = datetime.utcnow()
-
+    """
+    Generate a JWT token for the given user data
+    """
     try:
-        token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+        payload = user_data.copy()
+        payload['exp'] = datetime.utcnow() + timedelta(minutes=expiration_minutes)
+        payload['iat'] = datetime.utcnow()
+
+        # Make sure we're using PyJWT's encode method
+        token = jwt.encode(
+            payload,
+            SECRET_KEY,
+            algorithm="HS256"
+        )
+
+        # PyJWT >= 2.0.0 returns string instead of bytes
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
+
         return token
+
     except Exception as e:
-        print(f"Token Generation Error: {e}")
+        print(f"Token Generation Error: {str(e)}")
         return None
 
 
 def validate_token(token):
     """
     Validate and decode the JWT token
-
-    :param token: JWT token string
-    :return: Decoded payload or None
     """
+    if not token or not isinstance(token, str):
+        return None
+
     try:
-        decoded_payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        decoded_payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=["HS256"]
+        )
         return decoded_payload
+
     except jwt.ExpiredSignatureError:
         print("Token has expired")
         return None
     except jwt.InvalidTokenError as e:
-        print(f"Invalid Token Error: {e}")
+        print(f"Invalid Token Error: {str(e)}")
         return None
     except Exception as e:
-        print(f"Unexpected Token Validation Error: {e}")
+        print(f"Unexpected Token Validation Error: {str(e)}")
         return None
 
 
@@ -45,10 +65,12 @@ def token_required(f):
     def decorated_function(*args, **kwargs):
         token = None
 
+        # Check Authorization header
         auth_header = request.headers.get('Authorization')
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(' ')[1]
 
+        # Fallback to session token
         if not token:
             token = session.get('token')
 
@@ -62,6 +84,7 @@ def token_required(f):
         if not decoded_token:
             return jsonify({'error': 'Invalid or expired token'}), 401
 
+        # Add decoded token to request object
         request.token_payload = decoded_token
 
         return f(*args, **kwargs)

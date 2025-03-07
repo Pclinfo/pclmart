@@ -11,7 +11,6 @@ from datetime import datetime
 from app.users.database import create
 
 
-
 def verify_user_login(username, password):
     con = get_db_connection()
     try:
@@ -64,7 +63,7 @@ def user_login():
         return jsonify({"error": "Invalid credentials"}), 401
 
 
-def  user_login_id(user_id):
+def user_login_id(user_id):
     global connection
     if not user_id:
         return jsonify({"error": "Not logged in"}), 401
@@ -81,7 +80,7 @@ def  user_login_id(user_id):
                 "id": user[0],
                 "email": user[1],
                 "name": user[2],
-                "phone_number":user[3],
+                "phone_number": user[3],
                 "profile_picture": user[4]
             })
         else:
@@ -120,25 +119,97 @@ def user_register():
 def user_product_details():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
+
     cursor.execute("""SELECT ap.*, ps.active_status, ps.is_featured
-            FROM add_product ap
-            INNER JOIN product_status ps ON ap.PID = ps.pid
-            WHERE ps.active_status = TRUE;""")
+                      FROM add_product ap
+                      INNER JOIN product_status ps ON ap.PID = ps.pid
+                      WHERE ps.active_status = TRUE;""")
+
     products = cursor.fetchall()
 
+    filtered_products = []  # Store products that match the condition
+
     for product in products:
-        product['product_thumbnail'] = product['product_thumbnail']
-        product['product_thumbnail'] = f"{product['product_thumbnail']}".replace("./", "") if product[
-            "product_thumbnail"] else None
-        if product['additional_images']:
-            product['additional_images'] = f"{product['additional_images']}".replace("./", "") if product[
-                "additional_images"] else None
+        if product['tem_close'] == False:
+            product['product_thumbnail'] = product['product_thumbnail']
+            product['product_thumbnail'] = f"{product['product_thumbnail']}".replace("./", "") if product[
+                "product_thumbnail"] else None
+            if product['additional_images']:
+                product['additional_images'] = f"{product['additional_images']}".replace("./", "") if product[
+                    "additional_images"] else None
+
+            filtered_products.append(product)  # Append matching products
+
     if cursor:
         cursor.close()
     if conn:
         conn.close()
 
-    return jsonify({'products': products}), 200
+    return jsonify({'products': filtered_products}), 200
+
+
+def update_tem_close():
+    token_payload = getattr(request, 'token_payload', None)
+    if token_payload:
+        user_id = token_payload.get('user_id')
+    elif session.get('user'):
+        user_id = session.get('user')
+    else:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    data = request.get_json()
+    new_status = data.get('status', False)
+
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "UPDATE add_product SET tem_close = %s WHERE userid = %s;",
+            (new_status, user_id)
+        )
+        conn.commit()
+
+        # Check if any rows were affected
+        if cursor.rowcount > 0:
+            return jsonify({"message": "Shop status updated successfully"}), 200
+        else:
+            return jsonify({"message": "No shop records found to update"}), 404
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def get_tem_close_status():
+    token_payload = getattr(request, 'token_payload', None)
+    if token_payload:
+        user_id = token_payload.get('user_id')
+    elif session.get('user'):
+        user_id = session.get('user')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT tem_close FROM add_product WHERE userid = %s LIMIT 1;", (user_id,))
+        result = cursor.fetchone()
+        if result:
+            return jsonify({"tem_close": result[0]}), 200
+        else:
+            return jsonify({"tem_close": False}), 200  # Default to false
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def get_single_product_details(pid):
@@ -215,7 +286,6 @@ def user_profile_edit():
             update_fields.append("profile_path = %s")
             params.append(upload_path)
 
-
         if new_password:
             hashed_password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=16)
             update_fields.append("password = %s")
@@ -252,6 +322,7 @@ def user_profile_edit():
             cursor.close()
         if 'conn' in locals() and conn:
             conn.close()
+
 
 def create_ticket():
     try:
@@ -328,6 +399,7 @@ def create_ticket():
 
     return jsonify({"error": "Method not allowed"}), 405
 
+
 def view_ticket():
     try:
         data = request.form
@@ -360,10 +432,12 @@ def view_ticket():
     finally:
         cursor.close()
         conn.close()
+
+
 def delete_ticket():
     try:
-        data = request.json  # Ensure the request is JSON
-        pid = data.get('pid')  # Get the pid from the request body
+        data = request.json
+        pid = data.get('pid')
 
         if not pid:
             return jsonify({"error": "Ticket ID (pid) is required"}), 400

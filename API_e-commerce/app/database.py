@@ -3,6 +3,7 @@ from config.settings import Config
 from werkzeug.security import check_password_hash
 import bcrypt
 
+
 def get_db_connection():
     return psycopg2.connect(
         database=Config.DB_NAME,
@@ -30,6 +31,7 @@ def verify_user(username, password):
     finally:
         con.close()
 
+
 def verify_admin_user(email, password):
     con = get_db_connection()
     try:
@@ -43,6 +45,7 @@ def verify_admin_user(email, password):
             return None
     finally:
         con.close()
+
 
 def create():
     con = get_db_connection()
@@ -137,6 +140,7 @@ CREATE TABLE IF NOT EXISTS add_product (
 
     meta_title VARCHAR(255) DEFAULT NULL,             
     meta_description TEXT DEFAULT NULL,  
+    tem_closed Boolean Default False,
 
     FOREIGN KEY (userid) REFERENCES seller_users(id) ON DELETE CASCADE
 );
@@ -151,12 +155,14 @@ CREATE TABLE IF NOT EXISTS users_login(
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
-        mobile_numer VARCHAR(50),
+        mobile_number VARCHAR(50),
         password TEXT Default 'password',
+        profile_path Text,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     
 CREATE TABLE IF NOT EXISTS customer_ticket (
+   pid SERIAL PRIMARY KEY,
    user_id INT NOT NULL,
    FOREIGN KEY (user_id) REFERENCES users_login(id) ON DELETE CASCADE,
    subject TEXT NOT NULL,
@@ -182,5 +188,6 @@ CREATE TABLE IF NOT EXISTS product_selling (
 );
    ''')
     con.commit()
+
 
 create()

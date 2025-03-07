@@ -8,7 +8,8 @@ from werkzeug.utils import secure_filename
 from psycopg2.extras import RealDictCursor
 from app.authTokens import generate_token, validate_token
 import json
-
+import uuid
+import random
 
 def new_arrivals():
     try:
@@ -273,6 +274,7 @@ def order_insert():
         }), 401
 
     data = request.json
+    print(data)
     seller_id=data.get('seller_id')
     product_id = data.get('product_id')
     quantity = data.get('quantity')
@@ -289,7 +291,7 @@ def order_insert():
 
     cursor.execute(insert_query, (user_id,seller_id,product_id, quantity, total_price))
 
-    order_id = cursor.fetchone()['order_id']
+    order_id = cursor.fetchone()[0]
 
     conn.commit()
 
@@ -323,3 +325,4 @@ def order_filter():
     cursor.close()
     conn.commit()
     return jsonify(order),200
+
