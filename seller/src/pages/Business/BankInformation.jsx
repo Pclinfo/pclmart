@@ -21,7 +21,7 @@ const BankInformation = () => {
 
   const navigate = useNavigate();
 
-  // Fetch user data from API
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -35,7 +35,7 @@ const BankInformation = () => {
           }
         });
 
-        // Check if we got user data successfully
+
         if (response.data && response.data.user_data) {
           setBankInfo({
             account_holder_name: response.data.user_data.account_holder_name || '',

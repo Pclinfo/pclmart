@@ -1,8 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import config from '../../config';
 
 const DeliveryRestriction = () => {
   const [countryEnabled, setCountryEnabled] = useState(false);
   const [zipCodeEnabled, setZipCodeEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+
+  // Fetch current settings on component mount
+  useEffect(() => {
+    fetchDeliverySettings();
+  }, []);
+
+  const fetchDeliverySettings = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${config.apiUrl}/delivery_restriction_setting`);
+      const data = response.data;
+      
+      setCountryEnabled(data.countryEnabled);
+      setZipCodeEnabled(data.zipCodeEnabled);
+    } catch (error) {
+      console.error('Error fetching delivery settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveDeliverySettings = async () => {
+    try {
+      setSaveStatus('Saving...');
+      
+      // Prepare the data to send
+      const payload = {
+        countryEnabled: countryEnabled,
+        zipCodeEnabled: zipCodeEnabled
+      };
+      
+      // Check if settings already exist
+      const checkResponse = await axios.get(`${config.apiUrl}/delivery_restriction_setting`);
+      
+      let response;
+      // If we got a response, we know settings exist (empty or not)
+      if (checkResponse.status === 200) {
+        response = await axios.put(`${config.apiUrl}/delivery_restriction_setting`, payload);
+      } else {
+        response = await axios.post(`${config.apiUrl}/delivery_restriction_setting`, payload);
+      }
+      
+      setSaveStatus('Settings saved successfully!');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (error) {
+      console.error('Error saving delivery settings:', error);
+      setSaveStatus('Error saving settings. Please try again.');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  const toggleCountryEnabled = () => {
+    setCountryEnabled(!countryEnabled);
+  };
+
+  const toggleZipCodeEnabled = () => {
+    setZipCodeEnabled(!zipCodeEnabled);
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 w-full max-w-7xl mx-auto">
+        <p>Loading delivery settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 w-full max-w-7xl mx-auto">
@@ -42,7 +112,7 @@ const DeliveryRestriction = () => {
                 type="checkbox"
                 className="hidden"
                 checked={countryEnabled}
-                onChange={() => setCountryEnabled(!countryEnabled)}
+                onChange={toggleCountryEnabled}
               />
               <span className={`absolute cursor-pointer inset-0 rounded-full transition-colors duration-200 ease-in-out ${
                 countryEnabled ? 'bg-blue-600' : 'bg-gray-200'
@@ -81,7 +151,7 @@ const DeliveryRestriction = () => {
                 type="checkbox"
                 className="hidden"
                 checked={zipCodeEnabled}
-                onChange={() => setZipCodeEnabled(!zipCodeEnabled)}
+                onChange={toggleZipCodeEnabled}
               />
               <span className={`absolute cursor-pointer inset-0 rounded-full transition-colors duration-200 ease-in-out ${
                 zipCodeEnabled ? 'bg-blue-600' : 'bg-gray-200'
@@ -93,6 +163,21 @@ const DeliveryRestriction = () => {
             </label>
           </div>
         </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end mt-6 items-center gap-4">
+        {saveStatus && (
+          <span className={`text-sm ${saveStatus.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
+            {saveStatus}
+          </span>
+        )}
+        <button 
+          onClick={saveDeliverySettings}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Save
+        </button>
       </div>
     </div>
   );

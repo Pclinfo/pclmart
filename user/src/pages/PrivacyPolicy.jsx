@@ -54,24 +54,21 @@ const PrivacyPolicy = ({ policyType = 'privacy' }) => {
         );
     }
 
-    // This assumes the API returns the content in a format that needs to be
-    // preserved with proper line breaks and bullet points
+
     const formatPolicyContent = (content) => {
         if (!content) return '';
-        
-        // Keep the original formatting, replace new lines with <br/> and preserve bullet points
+
         return content
             .split('\n')
             .map((line, i) => {
-                // Detect bullet points (• character)
+
                 if (line.trim().startsWith('•')) {
                     return `<div class="ml-6 flex" key="${i}">
                         <span class="mr-2">•</span>
                         <span>${line.trim().substring(1)}</span>
                     </div>`;
                 }
-                
-                // Detect section headers (ALL CAPS)
+
                 if (line.trim() === line.trim().toUpperCase() && line.trim().length > 3) {
                     return `<h2 class="font-bold text-lg mt-6 mb-2" key="${i}">${line}</h2>`;
                 }

@@ -6,7 +6,6 @@ import AuthContext, { AuthProvider } from './context/AuthContext';
 // Import all your page components
 import Login from './pages/Login';
 import Register from './pages/Register';
-import SellerMainPage from './pages/SellerMainPage'
 import SellerRegisterPage from "./pages/seller/SellerRegisterPage";
 
 // Order Management Pages
@@ -25,10 +24,6 @@ import PendingRefunds from './pages/Refunds/PendingRefunds';
 import ApprovedRefunds from './pages/Refunds/ApprovedRefunds';
 import RejectedRefunds from './pages/Refunds/RejectedRefunds';
 import RefundedRequests from './pages/Refunds/RefundedRequests';
-import ProcessingRefunds from './pages/Refunds/ProcessingRefunds';
-import CompletedRefunds from './pages/Refunds/CompletedRefunds';
-import CustomerDisputes from './pages/Refunds/CustomerDisputes';
-import RefundHistory from './pages/Refunds/RefundHistory';
 
 // Product Management Pages
 import EditProduct from './pages/Products/EditProduct';
@@ -39,7 +34,6 @@ import NewProductRequest from './pages/Products/NewProductRequest';
 import DeniedProductRequest from './pages/Products/DeniedProductRequest';
 import AddNewProduct from './pages/Products/AddNewProduct';
 import ProductGallery from './pages/Products/ProductGallery';
-import BulkImport from './pages/Products/BulkImport';
 import RequestRestockList from './pages/Products/RequestRestockList';
 import ProductReviews from './pages/Products/ProductReviews';
 
@@ -48,16 +42,20 @@ import Dashboard from './pages/Dashboard';
 import Pos from './pages/Pos';
 import Coupons from './pages/Coupons';
 
+// Report Pages
 import TransactionReport from './pages/Reports/TransactionReport';
 import ProductReport from './pages/Reports/ProductReport';
 import OrderReport from './pages/Reports/OrderReport';
 
+// Business Pages
 import Withdraws from './pages/Business/Withdraws';
 import BankInformation from './pages/Business/BankInformation';
 import ShopSettings from './pages/Business/ShopSettings';
 import UpdateShopSettings from './pages/Business/UpdateShopSettings';
 import EditBankInfo from './pages/Business/EditBankInfo';
-  
+
+// Profile Information Pages
+import ProfileInformation from './pages/ProfileInformation';
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -119,6 +117,7 @@ const AppRoutes = () => {
         }
       />
 
+      <Route path="/profile-information" element={<ProtectedRoute><ProfileInformation /></ProtectedRoute>} />
       {/* Order Management Routes */}
       <Route path="/orders/all" element={<ProtectedRoute><All /></ProtectedRoute>} />
       <Route path="/orders/pending" element={<ProtectedRoute><PendingOrders /></ProtectedRoute>} />
@@ -135,10 +134,6 @@ const AppRoutes = () => {
       <Route path="/refunds/approved" element={<ProtectedRoute><ApprovedRefunds /></ProtectedRoute>} />
       <Route path="/refunds/rejected" element={<ProtectedRoute><RejectedRefunds /></ProtectedRoute>} />
       <Route path="/refunds/refunded" element={<ProtectedRoute><RefundedRequests /></ProtectedRoute>} />
-      <Route path="/refunds/processing" element={<ProtectedRoute><ProcessingRefunds /></ProtectedRoute>} />
-      <Route path="/refunds/completed" element={<ProtectedRoute><CompletedRefunds /></ProtectedRoute>} />
-      <Route path="/refunds/disputes" element={<ProtectedRoute><CustomerDisputes /></ProtectedRoute>} />
-      <Route path="/refunds/history" element={<ProtectedRoute><RefundHistory /></ProtectedRoute>} />
 
       {/* Product Management Routes */}
       <Route path="/edit-product/:pid" element={<ProtectedRoute><EditProduct /></ProtectedRoute>} />
@@ -149,7 +144,6 @@ const AppRoutes = () => {
       <Route path="/products/denied-product-request" element={<ProtectedRoute><DeniedProductRequest /></ProtectedRoute>} />
       <Route path="/products/add-new-product" element={<ProtectedRoute><AddNewProduct /></ProtectedRoute>} />
       <Route path="/products/product-gallery" element={<ProtectedRoute><ProductGallery /></ProtectedRoute>} />
-      <Route path="/products/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
       <Route path="/products/request-restock-list" element={<ProtectedRoute><RequestRestockList /></ProtectedRoute>} />
       <Route path="/product-reviews" element={<ProtectedRoute><ProductReviews /></ProtectedRoute>} />
 

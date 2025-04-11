@@ -537,7 +537,7 @@ const NewProductsRequest = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-center space-x-2">
-                        
+
                             <button
                               onClick={() => handleViewProduct(product.id)}
                               className="text-green-500 hover:text-green-700 transition"

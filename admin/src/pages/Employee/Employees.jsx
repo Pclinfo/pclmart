@@ -24,15 +24,6 @@ const Employees = () => {
       role: "",
       status: true,
       avatar: "/api/placeholder/32/32"
-    },
-    {
-      id: 3,
-      name: "Demo Employee",
-      email: "",
-      phone: "",
-      role: "",
-      status: true,
-      avatar: "/api/placeholder/32/32"
     }
   ]);
 

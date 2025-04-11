@@ -13,7 +13,7 @@ const Coupon = () => {
   const [editMode, setEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Form state matching backend field names
+
   const [formData, setFormData] = useState({
     coupon_type: '',
     coupon_title: '',
@@ -29,7 +29,7 @@ const Coupon = () => {
     expiry_date: ''
   });
 
-  // Generate random coupon code
+
   const generateCouponCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
@@ -39,13 +39,12 @@ const Coupon = () => {
     setFormData({ ...formData, coupon_code: code });
   };
 
-  // Handle form input changes
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Fetch all coupons
   const fetchCoupons = async () => {
     setIsLoading(true);
     try {
@@ -58,21 +57,19 @@ const Coupon = () => {
     }
   };
 
-  // Submit form to add or update coupon
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       if (editMode) {
-        // Update existing coupon
+ 
         await axios.put(`${config.apiUrl}/update_coupon/${editId}`, formData);
       } else {
-        // Add new coupon
+
         await axios.post(`${config.apiUrl}/add_coupon`, formData);
       }
 
-      // Reset form and refresh coupon list
       resetForm();
       fetchCoupons();
     } catch (error) {
@@ -82,7 +79,7 @@ const Coupon = () => {
     }
   };
 
-  // Reset form to initial state
+
   const resetForm = () => {
     setFormData({
       coupon_type: '',
@@ -102,12 +99,11 @@ const Coupon = () => {
     setEditId(null);
   };
 
-  // Edit coupon
+
   const handleEdit = (coupon) => {
     setEditMode(true);
     setEditId(coupon.id);
 
-    // Map backend data to form fields
     setFormData({
       coupon_type: coupon.coupon_type,
       coupon_title: coupon.coupon_title,
@@ -124,7 +120,7 @@ const Coupon = () => {
     });
   };
 
-  // Delete coupon
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this coupon?')) {
       try {
@@ -136,7 +132,7 @@ const Coupon = () => {
     }
   };
 
-  // Toggle coupon status
+
   const toggleStatus = async (coupon) => {
     try {
       await axios.put(`${config.apiUrl}/coupons/${coupon.id}`, {
@@ -149,13 +145,13 @@ const Coupon = () => {
     }
   };
 
-  // Filter coupons based on search term
+
   const filteredCoupons = coupons.filter(coupon =>
     coupon.coupon_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     coupon.coupon_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Fetch coupons on component mount
+
   useEffect(() => {
     fetchCoupons();
   }, []);

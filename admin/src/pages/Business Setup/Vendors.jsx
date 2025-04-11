@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import config from '../../config';
 
 const Vendors = () => {
     const [formData, setFormData] = useState({
@@ -13,8 +14,47 @@ const Vendors = () => {
             productWiseShipping: true
         }
     });
+    const [settingId, setSettingId] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
 
-    // Handle changes to text input fields
+    // Fetch existing settings on component mount
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${config.apiUrl}/vendor_settings`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.settings && data.settings.length > 0) {
+                    // Get the first/latest setting
+                    const latestSetting = data.settings[0];
+                    setSettingId(latestSetting.id);
+                    setFormData({
+                        commission: latestSetting.commission.toString(),
+                        enablePOS: latestSetting.enable_pos,
+                        vendorRegistration: latestSetting.vendor_registration,
+                        minimumOrder: latestSetting.minimum_order,
+                        vendorCanReply: latestSetting.vendor_can_reply,
+                        forgotPasswordMethod: latestSetting.forgot_password_method,
+                        needProductApproval: {
+                            newProduct: latestSetting.need_approval_new_product,
+                            productWiseShipping: latestSetting.need_approval_product_shipping
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -23,7 +63,6 @@ const Vendors = () => {
         }));
     };
 
-    // Handle toggle switches
     const handleToggle = (name) => {
         setFormData(prev => ({
             ...prev,
@@ -31,7 +70,6 @@ const Vendors = () => {
         }));
     };
 
-    // Handle radio button changes
     const handleRadioChange = (value) => {
         setFormData(prev => ({
             ...prev,
@@ -39,7 +77,6 @@ const Vendors = () => {
         }));
     };
 
-    // Handle checkbox changes for product approval
     const handleCheckboxChange = (name) => {
         setFormData(prev => ({
             ...prev,
@@ -50,14 +87,44 @@ const Vendors = () => {
         }));
     };
 
-    // Handle form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        // Add your API call or submission logic here
+        setLoading(true);
+        setMessage('');
+        
+        try {
+            const url = settingId 
+                ? `${config.apiUrl}/update_vendor_settings/${settingId}`
+                : `${config.apiUrl}/vendor_settings`;
+                
+            const method = settingId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                setMessage(data.message);
+                if (!settingId && data.id) {
+                    setSettingId(data.id);
+                }
+            } else {
+                setMessage(`Error: ${data.message || 'Something went wrong'}`);
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            setMessage('Failed to save settings. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // InfoIcon component for reusability
     const InfoIcon = () => (
         <span className="text-gray-400 cursor-help">
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
@@ -66,7 +133,6 @@ const Vendors = () => {
         </span>
     );
 
-    // Toggle Switch component for reusability
     const ToggleSwitch = ({ isOn, onToggle }) => (
         <button
             type="button"
@@ -74,8 +140,7 @@ const Vendors = () => {
             className={`w-12 h-6 rounded-full p-1 transition-colors ${isOn ? 'bg-blue-600' : 'bg-gray-300'}`}
         >
             <div
-                className={`w-4 h-4 rounded-full bg-white transform transition-transform ${isOn ? 'translate-x-6' : 'translate-x-0'
-                    }`}
+                className={`w-4 h-4 rounded-full bg-white transform transition-transform ${isOn ? 'translate-x-6' : 'translate-x-0'}`}
             />
         </button>
     );
@@ -91,6 +156,13 @@ const Vendors = () => {
                 </span>
                 <h2 className="text-lg font-medium">Vendor Setup</h2>
             </div>
+
+            {/* Messages */}
+            {message && (
+                <div className={`p-3 rounded-md ${message.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    {message}
+                </div>
+            )}
 
             {/* Main Form Content */}
             <div className="space-y-6">
@@ -232,9 +304,10 @@ const Vendors = () => {
             <div className="flex justify-end">
                 <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300"
                 >
-                    Save
+                    {loading ? 'Saving...' : 'Save'}
                 </button>
             </div>
         </form>

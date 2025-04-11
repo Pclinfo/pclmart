@@ -1,37 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import config from '../../config';
 
 const ShippingMethod = () => {
   const [shippingType, setShippingType] = useState('inhouse');
-  const [categories, setCategories] = useState([
-    {
-      id: 10,
-      image: '🖥️',
-      name: 'Electronics & Gadgets',
-      cost: 0,
-      status: false
-    },
-    {
-      id: 11,
-      image: '👜',
-      name: 'Travel & Luggage',
-      cost: 0,
-      status: false
-    },
-    {
-      id: 12,
-      image: '📚',
-      name: 'Books & Stationery',
-      cost: 0,
-      status: false
-    },
-    {
-      id: 13,
-      image: '🛒',
-      name: 'Groceries & Dailies',
-      cost: 0,
-      status: false
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+
+  // Fetch shipping settings on component mount
+  useEffect(() => {
+    fetchShippingSettings();
+  }, []);
+
+  const fetchShippingSettings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${config.apiUrl}/get_shipping_settings`);
+      const data = response.data;
+      
+      setShippingType(data.shippingType);
+      
+      // If no categories returned, use default ones
+      if (data.categories && data.categories.length > 0) {
+        setCategories(data.categories.map(cat => ({
+          ...cat,
+          image: getCategoryEmoji(cat.name) // Add emoji based on category name
+        })));
+      } 
+    } catch (error) {
+      console.error('Error fetching shipping settings:', error);
+      // Use default categories on error
+      
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+
+  // Helper function to get emoji based on category name
+  const getCategoryEmoji = (name) => {
+    if (name.includes('Electronics')) return '🖥️';
+    if (name.includes('Travel')) return '👜';
+    if (name.includes('Books')) return '📚';
+    if (name.includes('Groceries')) return '🛒';
+    return '📦'; // Default emoji
+  };
 
   const handleCostChange = (id, value) => {
     setCategories(categories.map(category => 
@@ -44,6 +57,42 @@ const ShippingMethod = () => {
       category.id === id ? { ...category, status: !category.status } : category
     ));
   };
+
+  const saveShippingSettings = async () => {
+    try {
+      setSaveStatus('Saving...');
+      
+      // Check if any settings exist first
+      const checkResponse = await axios.get(`${config.apiUrl}/get_shipping_settings`);
+      
+      let response;
+      const payload = {
+        shippingType,
+        categories: categories.map(({ id, name, cost, status }) => ({ 
+          id, name, cost, status 
+        }))
+      };
+      
+      if (checkResponse.data.categories && checkResponse.data.categories.length > 0) {
+        // Update existing settings
+        response = await axios.put(`${config.apiUrl}/update_shipping_settings`, payload);
+      } else {
+        // Create new settings
+        response = await axios.post(`${config.apiUrl}/create_shipping_settings`, payload);
+      }
+      
+      setSaveStatus('Settings saved successfully!');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (error) {
+      console.error('Error saving shipping settings:', error);
+      setSaveStatus('Error saving settings. Please try again.');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="p-6">Loading shipping settings...</div>;
+  }
 
   return (
     <div className="p-6 space-y-8">
@@ -141,7 +190,7 @@ const ShippingMethod = () => {
                     <input
                       type="number"
                       value={category.cost}
-                      onChange={(e) => handleCostChange(category.id, e.target.value)}
+                      onChange={(e) => handleCostChange(category.id, parseFloat(e.target.value) || 0)}
                       className="w-32 p-2 border rounded"
                     />
                   </td>
@@ -167,8 +216,16 @@ const ShippingMethod = () => {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end">
-        <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+      <div className="flex justify-end items-center gap-4">
+        {saveStatus && (
+          <span className={`text-sm ${saveStatus.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
+            {saveStatus}
+          </span>
+        )}
+        <button 
+          onClick={saveShippingSettings}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
           Save
         </button>
       </div>

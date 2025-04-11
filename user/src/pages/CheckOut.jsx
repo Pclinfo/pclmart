@@ -34,7 +34,7 @@ const CheckOut = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useContext(AuthContext);
 
-    // States for all sections
+
     const [activeStep, setActiveStep] = useState(1);
     const [completedSteps, setCompletedSteps] = useState(new Set());
     const [loginData, setLoginData] = useState({
@@ -49,11 +49,11 @@ const CheckOut = () => {
     const [selectedAddress, setSelectedAddress] = useState(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
-    // Get checkout items from location state
+
     const checkoutItems = location.state?.items || [];
     const fromBuyNow = location.state?.fromBuyNow || false;
 
-    // Calculate order summary
+
     const orderSummary = {
         items: checkoutItems,
         delivery: 0,
@@ -63,7 +63,7 @@ const CheckOut = () => {
     };
 
     const fetchUserAddresses = async () => {
-        // Check for token in localStorage first
+  
         const token = localStorage.getItem('token');
         if (!token) {
             console.log('No authentication token found');
@@ -84,21 +84,19 @@ const CheckOut = () => {
 
             const data = await response.json();
 
-            // Access the nested address array from the response
+
             const addressList = data.address || [];
 
-            // Filter addresses to show shipping addresses first
             const shippingAddresses = addressList.filter(addr => addr.addresspurpose === 'shipping');
             const otherAddresses = addressList.filter(addr => addr.addresspurpose !== 'shipping');
             const sortedAddresses = [...shippingAddresses, ...otherAddresses];
 
             setAddresses(sortedAddresses);
 
-            // Automatically select the first shipping address if available
             const defaultAddress = shippingAddresses.length > 0 ? shippingAddresses[0] : sortedAddresses[0];
             if (defaultAddress) {
                 setSelectedAddress(defaultAddress.id);
-                completeStep(1); // Mark login step as completed
+                completeStep(1); 
             }
         } catch (error) {
             console.error('Error fetching addresses:', error);
@@ -112,7 +110,7 @@ const CheckOut = () => {
         }
     };
 
-    // Update the useEffect to use this function
+
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserAddresses();
@@ -120,13 +118,13 @@ const CheckOut = () => {
     }, [isAuthenticated]);
 
 
-    // Handle section completion
+
     const completeStep = (step) => {
         setCompletedSteps(prev => new Set([...prev, step]));
         setActiveStep(step + 1);
     };
 
-    // Login handlers
+
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setIsLoggingIn(true);
@@ -151,7 +149,7 @@ const CheckOut = () => {
         }
     };
 
-    // Address handlers
+
     const handleAddressSelection = (addressId) => {
         setSelectedAddress(addressId);
     };
@@ -166,7 +164,7 @@ const CheckOut = () => {
         navigate('/my-address', { state: { returnTo: '/checkout' } });
     };
 
-    // Order summary handlers
+
     const handleRemoveItem = (itemId) => {
         const updatedItems = checkoutItems.filter(item => item.product_id !== itemId);
         if (updatedItems.length === 0) {
@@ -201,19 +199,19 @@ const CheckOut = () => {
         }
 
         try {
-            // Find the selected address details
+
             const shippingAddress = addresses.find(addr => addr.id === selectedAddress);
             if (!shippingAddress) {
                 alert('Invalid shipping address');
                 return;
             }
 
-            // Calculate subtotal before platform fee
+
             const subtotal = checkoutItems.reduce((acc, item) =>
                 acc + (parseFloat(item.unit_price) * item.quantity), 0
             );
 
-            // Prepare the order payload with all necessary details for Orders display
+
             const orderPayload = {
                 items: checkoutItems.map(item => ({
                     product_id: item.product_id,
@@ -236,14 +234,14 @@ const CheckOut = () => {
                 payment_method: selectedPaymentMethod,
                 subtotal: subtotal,
                 platform_fee: orderSummary.platformFee,
-                shipping: 0, // Free shipping
-                discount: 0, // Add discount logic if needed
+                shipping: 0, 
+                discount: 0,
                 total_amount: orderSummary.total,
-                status: 'processing', // Initial status
+                status: 'processing', 
                 order_date: new Date().toISOString()
             };
 
-            // Send order to backend
+    
             const response = await axios.post(`${config.apiUrl}/insert_order`, orderPayload, {
                 headers: {
                     'Authorization': `Bearer ${user.token}`,
@@ -251,12 +249,11 @@ const CheckOut = () => {
                 }
             });
 
-            // Check for successful order creation
+
             if (response.data && response.data.order_id) {
-                // Mark payment step as complete
+
                 completeStep(4);
 
-                // Navigate to orders page with success message and order details
                 navigate('/orders', {
                     state: {
                         success: true,
@@ -281,14 +278,12 @@ const CheckOut = () => {
         }
     };
 
-
-    // Helper function for image URLs
     const getFullImageUrl = (url) => {
         if (!url) return '/api/placeholder/100/100';
         return url.startsWith('http') ? url : `${config.apiUrl}/${url}`;
     };
 
-    // Render functions for each section
+
     const renderLoginContent = () => {
         if (isAuthenticated && user) {
             return (

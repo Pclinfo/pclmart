@@ -21,7 +21,8 @@ const BusinessSettings = () => {
 
   const tabs = [
     'General', 'Payment Options', 'Products', 'Priority Setup', 'Orders',
-    'Vendors', 'Customers', 'Delivery Men', 'Shipping Method', 'Delivery Restriction', 'Invoice'
+    'Vendors', 'Customers', 'Delivery Men',  'Invoice',
+    // 'Shipping Method', 'Delivery Restriction'
   ];
 
 
@@ -43,10 +44,10 @@ const BusinessSettings = () => {
         return <Customers />;
       case 'Delivery Men':
         return <DeliveryMen />;
-      case 'Shipping Method':
-        return <ShippingMethod />;
-      case 'Delivery Restriction':
-        return <DeliveryRestriction />;
+      // case 'Shipping Method':
+      //   return <ShippingMethod />;
+      // case 'Delivery Restriction':
+      //   return <DeliveryRestriction />;
       case 'Invoice':
         return <Invoice />;
 

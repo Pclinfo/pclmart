@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     User, Package, RefreshCcw, Heart, Award,
-    Inbox, MapPin, LifeBuoy, Share2, Ticket, Navigation
+    Inbox, MapPin, LifeBuoy, Share2, Ticket, Navigation,Send
 } from 'lucide-react';
 
 
@@ -13,6 +13,7 @@ const Sidebar = () => {
         { icon: <Heart size={20} />, text: 'Wish List', href: "/wishlist" },
         { icon: <Award size={20} />, text: 'My Loyalty Point', href: "/loyalty" },
         { icon: <Inbox size={20} />, text: 'Inbox', href: "/inbox" },
+        { icon: <Send size={20} />, text: 'Message', href: "/message" },
         { icon: <MapPin size={20} />, text: 'My Address', href: "/address" },
         { icon: <LifeBuoy size={20} />, text: 'Support Ticket', href: "/support" },
         { icon: <Share2 size={20} />, text: 'Refer & Earn', href: "/refer" },

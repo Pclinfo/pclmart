@@ -7,7 +7,7 @@ import config from '../../config';
 const CustomerList = () => {
   const [activeContent, setActiveContent] = useState(' ');
 
-  // Filter state
+
   const [orderDate, setOrderDate] = useState('');
   const [joiningDate, setJoiningDate] = useState('');
   const [status, setStatus] = useState('');
@@ -15,24 +15,24 @@ const CustomerList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [limit, setLimit] = useState('100');
 
-  // Customer data state
+
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalCustomers, setTotalCustomers] = useState(0);
 
-  // Fetch all customers on initial load
+
   useEffect(() => {
     fetchCustomers();
   }, []);
 
-  // Function to fetch all customers
+
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${config.apiUrl}/customer_list`);
 
-      // Transform backend data to match frontend structure
+   
       const transformedData = response.data.map((customer) => ({
         id: customer.id,
         name: customer.name,
@@ -40,7 +40,7 @@ const CustomerList = () => {
         phone: customer.mobile_number,
         created_at: customer.created_at,
         totalOrders: customer.quantity || 0,
-        isBlocked: false, // You might need to add this field in your backend
+        isBlocked: false, 
         avatar: '/api/placeholder/40/40'
       }));
 
@@ -55,7 +55,6 @@ const CustomerList = () => {
     }
   };
 
-  // Function to filter customers
   const filterCustomers = async () => {
     try {
       setLoading(true);
@@ -68,16 +67,14 @@ const CustomerList = () => {
         limit: parseInt(limit) || 100
       });
 
-      // Transform backend data to match frontend structure
-      // Ensure each customer has a unique ID for React keys
       const transformedData = response.data.map((customer) => ({
-        id: customer.id || Math.random().toString(36).substr(2, 9), // Fallback to random ID if none exists
+        id: customer.id || Math.random().toString(36).substr(2, 9), 
         name: customer.name,
         email: customer.email,
         phone: customer.mobile_number,
         created_at: customer.created_at,
         totalOrders: customer.quantity || 0,
-        isBlocked: customer.status === 'blocked', // Map status field properly
+        isBlocked: customer.status === 'blocked',
         avatar: '/api/placeholder/40/40'
       }));
 
@@ -92,7 +89,7 @@ const CustomerList = () => {
     }
   };
 
-  // Function to reset filters
+
   const resetFilters = () => {
     setOrderDate('');
     setJoiningDate('');

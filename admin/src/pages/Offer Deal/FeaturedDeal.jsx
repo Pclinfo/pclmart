@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
-import axios from 'axios'; // Make sure axios is installed
+import axios from 'axios'; 
 import config from '../../config';
 
 
@@ -27,7 +27,7 @@ const FeatureDeal = () => {
     { id: 'in', name: 'Hindi(IN)' }
   ];
 
-  // Fetch all feature deals
+
   const fetchFeatureDeals = async () => {
     try {
       const response = await axios.get(`${config.apiUrl}/feature_deal`);
@@ -41,7 +41,7 @@ const FeatureDeal = () => {
     fetchFeatureDeals();
   }, []);
 
-  // Handle input changes
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -50,20 +50,20 @@ const FeatureDeal = () => {
     });
   };
 
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       if (editMode) {
-        // Update existing feature deal
+   
         await axios.put(`${config.apiUrl}/feature_deal/${editId}`, formData);
       } else {
-        // Add new feature deal
+
         await axios.post(`${config.apiUrl}/feature_deal`, formData);
       }
 
-      // Reset form and fetch updated data
+
       resetForm();
       fetchFeatureDeals();
     } catch (error) {
@@ -71,7 +71,7 @@ const FeatureDeal = () => {
     }
   };
 
-  // Reset form to default values
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -84,7 +84,6 @@ const FeatureDeal = () => {
     setEditId(null);
   };
 
-  // Edit feature deal
   const handleEdit = (deal) => {
     setFormData({
       title: deal.title,
@@ -97,7 +96,6 @@ const FeatureDeal = () => {
     setEditId(deal.id);
   };
 
-  // Toggle feature deal status
   const toggleStatus = async (id, currentStatus) => {
     try {
       const dealToUpdate = featureDeals.find(deal => deal.id === id);
@@ -116,7 +114,7 @@ const FeatureDeal = () => {
     }
   };
 
-  // Delete feature deal
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this feature deal?')) {
       try {
@@ -128,7 +126,7 @@ const FeatureDeal = () => {
     }
   };
 
-  // Filter feature deals based on search query
+
   const filteredDeals = featureDeals.filter(deal =>
     deal && deal.title ? deal.title.toLowerCase().includes(searchQuery.toLowerCase()) : false
   );

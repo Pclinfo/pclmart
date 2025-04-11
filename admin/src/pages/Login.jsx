@@ -30,15 +30,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Hooks
+
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
-  // Validation Functions with more flexible validation
   const validateEmail = (email) => {
     if (!email) return "Email is required";
 
-    // More permissive email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return "Please enter a valid email address";
 
@@ -48,13 +46,11 @@ const Login = () => {
   const validatePassword = (password) => {
     if (!password) return "Password is required";
 
-    // Basic length check, adjust as needed
     if (password.length < 6) return "Password must be at least 6 characters";
 
     return "";
   };
 
-  // Handle input changes with real-time validation
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -62,7 +58,7 @@ const Login = () => {
       [name]: value
     }));
 
-    // Real-time validation
+
     switch (name) {
       case 'email':
         setErrors(prev => ({ ...prev, email: validateEmail(value) }));
@@ -75,7 +71,6 @@ const Login = () => {
     }
   };
 
-  // Form validation before submission
   const validateForm = () => {
     const newErrors = {
       email: validateEmail(formData.email),
@@ -84,16 +79,15 @@ const Login = () => {
 
     setErrors(newErrors);
 
-    // Check if any errors exist
     return !(newErrors.email || newErrors.password);
   };
 
 
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form before submission
+
     if (!validateForm()) {
       return;
     }
@@ -140,13 +134,9 @@ const Login = () => {
     }
   };
 
-  // Optional: Prefill for testing (remove in production)
+
   useEffect(() => {
-    // Uncomment and modify if you want to prefill credentials for testing
-    // setFormData({
-    //   email: 'admin@example.com',
-    //   password: 'adminpassword'
-    // });
+ 
   }, []);
 
   return (

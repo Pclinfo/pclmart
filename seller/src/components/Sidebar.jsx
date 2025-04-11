@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { IoIosSearch } from "react-icons/io";
 import { RiDashboardFill } from "react-icons/ri";
@@ -37,11 +37,7 @@ const Sidebar = () => {
         { label: 'Pending Refunds', path: '/refunds/pending' },
         { label: 'Approved Refunds', path: '/refunds/approved' },
         { label: 'Rejected Refunds', path: '/refunds/rejected' },
-        { label: 'Refunded', path: '/refunds/refunded' },
-        { label: 'Processing Refunds', path: '/refunds/processing' },
-        { label: 'Completed Refunds', path: '/refunds/completed' },
-        { label: 'Customer Disputes', path: '/refunds/disputes' },
-        { label: 'Refund History', path: '/refunds/history' }
+        { label: 'Refunded', path: '/refunds/refunded' }
     ];
 
     const productsSubmenus = [
@@ -51,16 +47,26 @@ const Sidebar = () => {
         { label: 'Denied Product Request', path: '/products/denied-product-request' },
         { label: 'Add New Product', path: '/products/add-new-product' },
         { label: 'Product Gallery', path: '/products/product-gallery' },
-        { label: 'Bulk Import', path: '/products/bulk-import' },
         { label: 'Request Restock List', path: '/products/request-restock-list' }
     ];
+
+
+    useEffect(() => {
+        if (location.pathname.includes('/orders/')) {
+            setActiveMenu('orders');
+        } else if (location.pathname.includes('/refunds/')) {
+            setActiveMenu('refunds');
+        } else if (location.pathname.includes('/products/')) {
+            setActiveMenu('products');
+        }
+    }, [location.pathname]);
 
     const handleMenuClick = (menuName) => {
         setActiveMenu(prevActive => prevActive === menuName ? '' : menuName);
     };
 
     const isSubmenuActive = (submenuPath) => {
-        return location.pathname.startsWith(submenuPath);
+        return location.pathname === submenuPath;
     };
 
     const MenuLink = ({ onClick, children, menuName }) => {
@@ -69,12 +75,21 @@ const Sidebar = () => {
         return (
             <div
                 className={`
-                    flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l cursor-pointer
-                    ${isActive ? 'bg-blue-50 border-blue-400' : ''}
+                    flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer mb-1
+                    transition-all duration-200 ease-in-out
+                    ${isActive
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                        : 'hover:bg-gray-100 text-gray-700'}
                 `}
                 onClick={() => handleMenuClick(menuName)}
             >
-                {children}
+                <div className="flex items-center gap-3">
+                    {children[0]} {/* Icon */}
+                    {children[1]} {/* Text */}
+                </div>
+                <div>
+                    {children[2]} {/* Arrow */}
+                </div>
             </div>
         );
     };
@@ -86,161 +101,251 @@ const Sidebar = () => {
             <NavLink
                 to={to}
                 className={`
-                    text-sm px-2 py-1 rounded
-                    ${isActive ? 'bg-blue-100 text-blue-900' : 'hover:bg-gray-100'}
+                    text-sm px-3 py-2 rounded-md transition-all duration-150 flex items-center
+                    ${isActive
+                        ? 'bg-blue-100 text-blue-700 font-medium'
+                        : 'hover:bg-gray-100 text-gray-600'}
                 `}
             >
+                <div className="w-1.5 h-1.5 rounded-full mr-2 bg-current opacity-70"></div>
                 {children}
             </NavLink>
         );
     };
 
-
-
     return (
-        <div className="w-[18%] h-screen sticky top-0 overflow-y-auto border-r-2">
-            <div className="flex flex-col gap-1 pt-6 pl-[2%] text-[14px] pb-6">
-                <div className="sticky top-0 bg-white z-5">
-                    <div className="relative flex flex-row items-center mb-4">
+        <div className="w-[250px] h-screen sticky top-0 overflow-y-auto shadow-lg bg-white">
+            <div className="flex flex-col px-3 py-5">
+
+                <div className="sticky top-0 bg-white z-10 mb-5">
+                    <div className="relative flex items-center">
+                        <IoIosSearch className="absolute left-3 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Search menu"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full border px-3 py-2 rounded"
+                            className="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-blue-300 transition-all"
                         />
-                        <IoIosSearch className="absolute right-2 w-6 h-6 text-gray-500" />
                     </div>
                 </div>
-                <NavLink to="/dashboard" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                    <RiDashboardFill className="w-6 h-6" />
-                    <p className="hidden md:block">Dashboard</p>
-                </NavLink>
 
-                <NavLink to="/pos" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                    <LuShoppingBag className="w-6 h-6" />
-                    <p className="hidden md:block">POS</p>
-                </NavLink>
+                {/* Main navigation */}
+                <div className="space-y-5">
+                    {/* Main Links */}
+                    <div className="space-y-1">
+                        <NavLink
+                            to="/dashboard"
+                            className={({ isActive }) => `
+                                flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                ${isActive
+                                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                    : 'hover:bg-gray-100 text-gray-700'}
+                            `}
+                        >
+                            <RiDashboardFill className="w-5 h-5" />
+                            <p className="font-medium">Dashboard</p>
+                        </NavLink>
 
-                <p className="font-medium mt-2">Product Management</p>
+                        <NavLink
+                            to="/pos"
+                            className={({ isActive }) => `
+                                flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                ${isActive
+                                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                    : 'hover:bg-gray-100 text-gray-700'}
+                            `}
+                        >
+                            <LuShoppingBag className="w-5 h-5" />
+                            <p className="font-medium">POS</p>
+                        </NavLink>
+                    </div>
 
-                <div>
-                    <MenuLink menuName="products">
-                        <AiOutlineProduct className="w-6 h-6" />
-                        <p className="hidden md:block">Products</p>
-                        {activeMenu === 'products' ? <IoIosArrowUp /> : <IoIosArrowDown />}
-                    </MenuLink>
-                    {activeMenu === 'products' && (
-                        <div className="pl-10 flex flex-col gap-2 mt-2">
-                            {productsSubmenus.map((submenu, index) => (
-                                <SubMenuLink key={index} to={submenu.path}>
-                                    {submenu.label}
-                                </SubMenuLink>
-                            ))}
+                    {/* Product Management Section */}
+                    <div>
+                        <p className="uppercase text-xs font-bold text-gray-500 px-4 mb-2">Product Management</p>
+
+                        <div className="space-y-1">
+                            <MenuLink menuName="products">
+                                <AiOutlineProduct className="w-5 h-5" />
+                                <p className="font-medium">Products</p>
+                                {activeMenu === 'products' ? <IoIosArrowUp /> : <IoIosArrowDown />}
+                            </MenuLink>
+
+                            {activeMenu === 'products' && (
+                                <div className="ml-4 pl-3 border-l-2 border-blue-200 space-y-1 mt-1 mb-1">
+                                    {productsSubmenus.map((submenu, index) => (
+                                        <SubMenuLink key={index} to={submenu.path}>
+                                            {submenu.label}
+                                        </SubMenuLink>
+                                    ))}
+                                </div>
+                            )}
+
+                            <NavLink
+                                to="/product-reviews"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <IoStarOutline className="w-5 h-5" />
+                                <p className="font-medium">Product Reviews</p>
+                            </NavLink>
                         </div>
-                    )}
-                </div>
+                    </div>
 
-                <div>
-                    <NavLink to="/product-reviews" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <IoStarOutline className="w-6 h-6" />
-                        <p className="hidden md:block">Product Reviews</p>
-                    </NavLink>
-                </div>
+                    {/* Order Management Section */}
+                    <div>
+                        <p className="uppercase text-xs font-bold text-gray-500 px-4 mb-2">Order Management</p>
 
-                <p className="font-medium mt-2">Order Management</p>
+                        <div className="space-y-1">
+                            <MenuLink menuName="orders">
+                                <IoCartOutline className="w-5 h-5" />
+                                <p className="font-medium">Orders</p>
+                                {activeMenu === 'orders' ? <IoIosArrowUp /> : <IoIosArrowDown />}
+                            </MenuLink>
 
+                            {activeMenu === 'orders' && (
+                                <div className="ml-4 pl-3 border-l-2 border-blue-200 space-y-1 mt-1 mb-1">
+                                    {orderSubmenus.map((submenu, index) => (
+                                        <SubMenuLink key={index} to={submenu.path}>
+                                            {submenu.label}
+                                        </SubMenuLink>
+                                    ))}
+                                </div>
+                            )}
 
-                <div>
-                    <MenuLink menuName="orders">
-                        <IoCartOutline className="w-6 h-6" />
-                        <p className="hidden md:block">Orders</p>
-                        {activeMenu === 'orders' ? <IoIosArrowUp /> : <IoIosArrowDown />}
-                    </MenuLink>
-                    {activeMenu === 'orders' && (
-                        <div className="pl-10 flex flex-col gap-2 mt-2">
-                            {orderSubmenus.map((submenu, index) => (
-                                <SubMenuLink key={index} to={submenu.path}>
-                                    {submenu.label}
-                                </SubMenuLink>
-                            ))}
+                            <MenuLink menuName="refunds">
+                                <RiRefund2Fill className="w-5 h-5" />
+                                <p className="font-medium">Refund Requests</p>
+                                {activeMenu === 'refunds' ? <IoIosArrowUp /> : <IoIosArrowDown />}
+                            </MenuLink>
+
+                            {activeMenu === 'refunds' && (
+                                <div className="ml-4 pl-3 border-l-2 border-blue-200 space-y-1 mt-1 mb-1">
+                                    {refundSubmenus.map((submenu, index) => (
+                                        <SubMenuLink key={index} to={submenu.path}>
+                                            {submenu.label}
+                                        </SubMenuLink>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </div>
 
+                    {/* Promotion Management Section */}
+                    <div>
+                        <p className="uppercase text-xs font-bold text-gray-500 px-4 mb-2">Promotion Management</p>
 
-                <div>
-                    <MenuLink menuName="refunds">
-                        <RiRefund2Fill className="w-6 h-6" />
-                        <p className="hidden md:block">Refund Requests</p>
-                        {activeMenu === 'refunds' ? <IoIosArrowUp /> : <IoIosArrowDown />}
-                    </MenuLink>
-                    {activeMenu === 'refunds' && (
-                        <div className="pl-10 flex flex-col gap-2 mt-2">
-                            {refundSubmenus.map((submenu, index) => (
-                                <SubMenuLink key={index} to={submenu.path}>
-                                    {submenu.label}
-                                </SubMenuLink>
-                            ))}
+                        <NavLink
+                            to="/coupons"
+                            className={({ isActive }) => `
+                                flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                ${isActive
+                                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                    : 'hover:bg-gray-100 text-gray-700'}
+                            `}
+                        >
+                            <BiSolidCoupon className="w-5 h-5" />
+                            <p className="font-medium">Coupons</p>
+                        </NavLink>
+                    </div>
+
+                    {/* Reports & Analytics Section */}
+                    <div>
+                        <p className="uppercase text-xs font-bold text-gray-500 px-4 mb-2">Reports & Analytics</p>
+
+                        <div className="space-y-1">
+                            <NavLink
+                                to="/transaction-report"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <IoAnalytics className="w-5 h-5" />
+                                <p className="font-medium">Transactions Report</p>
+                            </NavLink>
+
+                            <NavLink
+                                to="/products-report"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <SiSimpleanalytics className="w-5 h-5" />
+                                <p className="font-medium">Product Report</p>
+                            </NavLink>
+
+                            <NavLink
+                                to="/order-report"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <TbDeviceDesktopAnalytics className="w-5 h-5" />
+                                <p className="font-medium">Order Report</p>
+                            </NavLink>
                         </div>
-                    )}
+                    </div>
+
+                    {/* Business Section */}
+                    <div>
+                        <p className="uppercase text-xs font-bold text-gray-500 px-4 mb-2">Business Section</p>
+
+                        <div className="space-y-1">
+                            <NavLink
+                                to="/withdraws"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <IoWalletOutline className="w-5 h-5" />
+                                <p className="font-medium">Withdraws</p>
+                            </NavLink>
+
+                            <NavLink
+                                to="/bank-information"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <BsBank className="w-5 h-5" />
+                                <p className="font-medium">Bank Information</p>
+                            </NavLink>
+
+                            <NavLink
+                                to="/shop-settings"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all
+                                    ${isActive
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                                        : 'hover:bg-gray-100 text-gray-700'}
+                                `}
+                            >
+                                <AiOutlineShop className="w-5 h-5" />
+                                <p className="font-medium">Shop Settings</p>
+                            </NavLink>
+                        </div>
+                    </div>
                 </div>
-
-                <p className="font-medium mt-2">Promotion Management</p>
-
-                <div>
-                    <NavLink to="/coupons" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <BiSolidCoupon className="w-6 h-6" />
-                        <p className="hidden md:block">Coupons</p>
-                    </NavLink>
-                </div>
-
-                <p className="font-medium mt-2">Reports & Analytics</p>
-
-                <div>
-                    <NavLink to="/transaction-report" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <IoAnalytics className="w-6 h-6" />
-                        <p className="hidden md:block">Transactions Report</p>
-                    </NavLink>
-                </div>
-
-                <div>
-                    <NavLink to="/products-report" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <SiSimpleanalytics className="w-6 h-6" />
-                        <p className="hidden md:block">Product Report</p>
-                    </NavLink>
-                </div>
-
-                <div>
-                    <NavLink to="/order-report" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <TbDeviceDesktopAnalytics className="w-6 h-6" />
-                        <p className="hidden md:block">Order Report</p>
-                    </NavLink>
-                </div>
-
-                <p className="font-medium mt-2">Business Section</p>
-
-                <div>
-                    <NavLink to="/withdraws" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <IoWalletOutline className="w-6 h-6" />
-                        <p className="hidden md:block">Withdraws</p>
-                    </NavLink>
-                </div>
-
-                <div>
-                    <NavLink to="/bank-information" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <BsBank className="w-6 h-6" />
-                        <p className="hidden md:block">Bank Information</p>
-                    </NavLink>
-                </div>
-
-                <div>
-                    <NavLink to="/shop-settings" className="flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-l">
-                        <AiOutlineShop className="w-6 h-6" />
-                        <p className="hidden md:block">Shop Settings</p>
-                    </NavLink>
-                </div>
-
             </div>
         </div>
     );

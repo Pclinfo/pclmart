@@ -34,29 +34,27 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      // Reset error state and start loading
+      
       setError(null);
       setLoading(true);
 
-      // Enhanced token retrieval with multiple fallback methods
+     
       const getToken = () => {
-        // Check localStorage first
+      
         const localToken = localStorage.getItem('token');
         if (localToken) return localToken;
 
-        // Then check sessionStorage
         const sessionToken = sessionStorage.getItem('token');
         if (sessionToken) return sessionToken;
 
-        // If no token found, log and throw an error
         console.warn('No authentication token found');
         throw new Error('Authentication token is missing');
       };
 
-      // Get token for authorization
+     
       const token = getToken();
 
-      // Prepare axios configuration with enhanced error handling
+     
       const axiosConfig = {
         method: 'POST',
         url: `${config.apiUrl}/product_details`,
@@ -73,34 +71,34 @@ const ProductList = () => {
         withCredentials: false
       };
 
-      // Make the API call with additional error prevention
+     
       const response = await axios(axiosConfig);
 
-      // Validate response more robustly
+   
       if (!response.data || !Array.isArray(response.data.products)) {
         throw new Error('Invalid response format: Expected an array of products');
       }
 
-      // Process products with comprehensive error handling
+    
       const processedProducts = response.data.products.map(product => {
         try {
-          // Default values and sanitization
+       
           let thumbnailUrl = '/default-product-image.png';
 
-          // Process thumbnail URL with multiple fallback mechanisms
+          
           if (product.product_thumbnail) {
             const cleanedThumbnailPath = product.product_thumbnail
-              .replace(/^\.\//, '') // Remove leading './'
-              .replace(/^\/\//, '/') // Replace double slashes with single slash
-              .trim(); // Remove any whitespace
+              .replace(/^\.\//, '') 
+              .replace(/^\/\//, '/') 
+              .trim(); 
 
-            // Construct full URL with error prevention
+          
             thumbnailUrl = cleanedThumbnailPath.startsWith('http')
               ? cleanedThumbnailPath
               : `${config.apiUrl}/${cleanedThumbnailPath}`;
           }
 
-          // Comprehensive product object creation with default values
+       
           return {
             ...product,
             product_name: product.product_name || 'Unnamed Product',
@@ -111,11 +109,11 @@ const ProductList = () => {
               ? product.active_status
               : false,
             product_thumbnail: thumbnailUrl,
-            pid: product.pid || product.id || Date.now() // Fallback unique identifier
+            pid: product.pid || product.id || Date.now() 
           };
         } catch (productProcessingError) {
           console.error('Error processing individual product:', productProcessingError);
-          // Return a minimal safe object if processing fails
+        
           return {
             pid: Date.now(),
             product_name: 'Processing Error',
@@ -124,25 +122,25 @@ const ProductList = () => {
         }
       });
 
-      // Update state with processed products
+    
       setProducts(processedProducts);
       setFilteredProducts(processedProducts);
 
-      // Initialize image loading state
+    
       const initialImageLoading = {};
       processedProducts.forEach(product => {
         initialImageLoading[product.pid] = true;
       });
       setImageLoading(initialImageLoading);
 
-      // Optional: Log successful fetch
+    
       console.log(`Successfully fetched ${processedProducts.length} products`);
 
     } catch (error) {
-      // Comprehensive error handling
+   
       console.error('Products Fetch Error:', error);
 
-      // Detailed error type checking
+   
       if (error.response) {
         console.error('Server Response Error:', {
           data: error.response.data,
@@ -150,11 +148,11 @@ const ProductList = () => {
           headers: error.response.headers
         });
 
-        // Specific error messages based on status
+    
         switch (error.response.status) {
           case 401:
             setError('Authentication failed. Please log in again.');
-            // Clear tokens
+        
             localStorage.removeItem('token');
             sessionStorage.removeItem('token');
             break;
@@ -185,20 +183,20 @@ const ProductList = () => {
         setError(`Request error: ${error.message}`);
       }
 
-      // Clear products on error
+   
       setProducts([]);
       setFilteredProducts([]);
 
     } finally {
-      // Ensure loading is set to false regardless of success or failure
+   
       setLoading(false);
     }
   };
 
-  // Trigger fetch on component mount
+  
   useEffect(() => {
     fetchProducts();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []); 
 
   const handleImageLoad = (productId) => {
     setImageLoading(prev => ({
@@ -217,7 +215,7 @@ const ProductList = () => {
   };
 
 
-  // Search and Filtering
+ 
   const handleSearch = (event) => {
     const query = event.target.value;
     setSearchQuery(query);
@@ -229,7 +227,7 @@ const ProductList = () => {
     setCurrentPage(1);
   };
 
-  // Pagination
+  
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -248,7 +246,7 @@ const ProductList = () => {
         return;
       }
 
-      // Verify the product exists before navigation
+    
       const response = await axios.get(`${config.apiUrl}/product_detail/${pid}`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -256,7 +254,7 @@ const ProductList = () => {
       });
 
       if (response.data && response.data.products && response.data.products.length > 0) {
-        // Product exists, navigate to view page
+       
         navigate(`/view-product/${pid}`);
       } else {
         throw new Error('Product not found');
@@ -296,7 +294,7 @@ const ProductList = () => {
         return;
       }
 
-      // Verify the product exists before navigation
+    
       const response = await axios.get(`${config.apiUrl}/product_detail/${pid}`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -304,7 +302,7 @@ const ProductList = () => {
       });
 
       if (response.data && response.data.products && response.data.products.length > 0) {
-        // Product exists, navigate to edit page
+       
         navigate(`/edit-product/${pid}`);
       } else {
         throw new Error('Product not found');
@@ -372,7 +370,7 @@ const ProductList = () => {
   };
 
   const handleExport = () => {
-    // Implement export functionality
+   
     console.log('Exporting products...');
   };
 
@@ -384,7 +382,7 @@ const ProductList = () => {
     setCurrentPage(1);
   };
 
-  // Render Loading State
+ 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -396,7 +394,7 @@ const ProductList = () => {
     );
   }
 
-  // Render Error State
+
   if (error) {
     return (
       <div className="min-h-screen bg-red-50 flex items-center justify-center">

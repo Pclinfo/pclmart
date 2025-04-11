@@ -11,7 +11,7 @@ const ProductGallery = () => {
   const [error, setError] = useState(null);
   const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
 
-  // Image loading state management
+
   const handleImageError = (productId) => {
     setImageLoadErrors(prev => new Set([...prev, productId]));
   };
@@ -62,13 +62,13 @@ const ProductGallery = () => {
           let thumbnailUrl = defaultImage;
 
           if (product.product_thumbnail) {
-            // Handle various URL formats
+
             const cleanedUrl = product.product_thumbnail
               .replace(/^\.\//, '')
               .replace(/^\/\//, '/')
               .trim();
 
-            // Ensure URL is absolute
+
             if (cleanedUrl.startsWith('http')) {
               thumbnailUrl = cleanedUrl;
             } else if (cleanedUrl.startsWith('/')) {
@@ -77,7 +77,7 @@ const ProductGallery = () => {
               thumbnailUrl = `${config.apiUrl}/${cleanedUrl}`;
             }
 
-            // Validate URL
+
             try {
               new URL(thumbnailUrl);
             } catch {
@@ -111,7 +111,7 @@ const ProductGallery = () => {
       });
 
       setProducts(processedProducts);
-      setImageLoadErrors(new Set()); // Reset image errors on successful fetch
+      setImageLoadErrors(new Set()); 
 
     } catch (error) {
       console.error('Products Fetch Error:', error);

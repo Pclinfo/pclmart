@@ -7,7 +7,7 @@ import config from '../pages/config';
 const SupportTicket = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tickets, setTickets] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true); 
   const [error, setError] = useState(null);
 
   const [ticketForm, setTicketForm] = useState({
@@ -52,7 +52,7 @@ const SupportTicket = () => {
       }
 
       const data = await response.json();
-      setTickets(data.ticket || []); // Updated to match API response format
+      setTickets(data.ticket || []); 
     } catch (error) {
       setError(error.message);
     } finally {
@@ -91,7 +91,7 @@ const SupportTicket = () => {
 
   const validateFile = (file) => {
     const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024; 
 
     if (!allowedTypes.includes(file.type)) {
       throw new Error('Invalid file type. Only PDF, PNG, JPG, DOC, and DOCX files are allowed.');

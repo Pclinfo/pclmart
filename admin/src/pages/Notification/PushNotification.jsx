@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Navbar from '../../components/Navbar'
 import Sidebar from '../../components/Sidebar';
+import config from '../../config';
 
 const PushNotificationSetup = () => {
-
   const [activeContent, setActiveContent] = useState(' ');
-
   const [selectedLanguage, setSelectedLanguage] = useState('English(EN)');
   const [notificationStates, setNotificationStates] = useState({
     orderPending: false,
@@ -22,6 +22,21 @@ const PushNotificationSetup = () => {
     messageFromSeller: false
   });
 
+  const [notificationMessages, setNotificationMessages] = useState({
+    orderPending: '',
+    orderConfirmation: '',
+    orderProcessing: '',
+    orderOutForDelivery: '',
+    orderDelivered: '',
+    orderReturned: '',
+    orderFailed: '',
+    orderCanceled: '',
+    orderRefunded: '',
+    refundRequestCanceled: '',
+    messageFromDeliveryMan: '',
+    messageFromSeller: ''
+  });
+
   const languages = [
     { id: 'en', label: 'English(EN)' },
     { id: 'ar', label: 'Arabic(SA)' },
@@ -29,11 +44,105 @@ const PushNotificationSetup = () => {
     { id: 'hi', label: 'Hindi(IN)' }
   ];
 
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get(`${config.apiUrl}/get_push_notification`);
+        const notifications = response.data;
+
+        const newNotificationStates = { ...notificationStates };
+        const newNotificationMessages = { ...notificationMessages };
+
+        notifications.forEach(notification => {
+          const key = getKeyFromNotificationType(notification.notification_type);
+          if (key) {
+            newNotificationStates[key] = notification.enabled;
+            newNotificationMessages[key] = notification.message;
+          }
+        });
+
+        setNotificationStates(newNotificationStates);
+        setNotificationMessages(newNotificationMessages);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+
+  const getKeyFromNotificationType = (type) => {
+    const typeMap = {
+      'ORDER_PENDING': 'orderPending',
+      'ORDER_CONFIRMATION': 'orderConfirmation',
+      'ORDER_PROCESSING': 'orderProcessing',
+      'ORDER_OUT_FOR_DELIVERY': 'orderOutForDelivery',
+      'ORDER_DELIVERED': 'orderDelivered',
+      'ORDER_RETURNED': 'orderReturned',
+      'ORDER_FAILED': 'orderFailed',
+      'ORDER_CANCELED': 'orderCanceled',
+      'ORDER_REFUNDED': 'orderRefunded',
+      'REFUND_REQUEST_CANCELED': 'refundRequestCanceled',
+      'MESSAGE_FROM_DELIVERY_MAN': 'messageFromDeliveryMan',
+      'MESSAGE_FROM_SELLER': 'messageFromSeller'
+    };
+    return typeMap[type];
+  };
+
+  const getNotificationTypeFromKey = (key) => {
+    const keyMap = {
+      'orderPending': 'ORDER_PENDING',
+      'orderConfirmation': 'ORDER_CONFIRMATION',
+      'orderProcessing': 'ORDER_PROCESSING',
+      'orderOutForDelivery': 'ORDER_OUT_FOR_DELIVERY',
+      'orderDelivered': 'ORDER_DELIVERED',
+      'orderReturned': 'ORDER_RETURNED',
+      'orderFailed': 'ORDER_FAILED',
+      'orderCanceled': 'ORDER_CANCELED',
+      'orderRefunded': 'ORDER_REFUNDED',
+      'refundRequestCanceled': 'REFUND_REQUEST_CANCELED',
+      'messageFromDeliveryMan': 'MESSAGE_FROM_DELIVERY_MAN',
+      'messageFromSeller': 'MESSAGE_FROM_SELLER'
+    };
+    return keyMap[key];
+  };
+
   const handleToggle = (key) => {
     setNotificationStates(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  const handleMessageChange = (key, value) => {
+    setNotificationMessages(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const saveNotifications = async () => {
+    try {
+      const notificationsToSave = Object.keys(notificationStates).map(key => ({
+        notification_id: `${key}_${selectedLanguage}`,
+        language: selectedLanguage,
+        notification_type: getNotificationTypeFromKey(key),
+        message: notificationMessages[key],
+        enabled: notificationStates[key]
+      }));
+
+
+      for (const notification of notificationsToSave) {
+        await axios.post(`${config.apiUrl}/add_push_notification`, notification);
+      }
+
+      alert('Notifications saved successfully!');
+    } catch (error) {
+      console.error('Error saving notifications:', error);
+      alert('Failed to save notifications');
+    }
   };
 
   return (
@@ -109,9 +218,19 @@ const PushNotificationSetup = () => {
                   <textarea
                     className="w-full p-2 border rounded min-h-[80px] resize-none"
                     placeholder={item.placeholder}
+                    value={notificationMessages[item.key]}
+                    onChange={(e) => handleMessageChange(item.key, e.target.value)}
                   />
                 </div>
               ))}
+            </div>
+            <div className="mt-6 text-right">
+              <button
+                onClick={saveNotifications}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                Save Notifications
+              </button>
             </div>
           </div>
         </div>

@@ -27,7 +27,6 @@ const Pos = () => {
       setError(null);
       setLoading(true);
 
-      // Enhanced token retrieval
       const getToken = () => {
         const localToken = localStorage.getItem('token');
         if (localToken) return localToken;
@@ -103,14 +102,12 @@ const Pos = () => {
       setProducts(processedProducts);
       setFilteredProducts(processedProducts);
 
-      // Initialize image loading state
       const initialImageLoading = {};
       processedProducts.forEach(product => {
         initialImageLoading[product.pid] = true;
       });
       setImageLoading(initialImageLoading);
 
-      // Extract and set categories
       const uniqueCategories = ['All categories', ...new Set(processedProducts.map(p => p.product_type))];
       setCategories(uniqueCategories);
 
@@ -169,7 +166,6 @@ const Pos = () => {
     fetchProducts();
   }, []);
 
-  // Filter products based on category and search term
   useEffect(() => {
     const filtered = products.filter(product => {
       const matchesCategory = selectedCategory === 'All categories' ||
@@ -180,7 +176,6 @@ const Pos = () => {
     setFilteredProducts(filtered);
   }, [selectedCategory, searchTerm, products]);
 
-  // Calculate cart totals
   const cartTotals = {
     subTotal: cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0),
     productDiscount: 0,

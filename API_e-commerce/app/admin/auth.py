@@ -1,6 +1,6 @@
 import os.path
 
-from flask import request, jsonify, session, redirect, make_response
+from flask import request, jsonify, session, redirect, make_response, send_from_directory
 from app.database import get_db_connection, verify_user, verify_admin_user
 from psycopg2.extras import RealDictCursor
 from werkzeug.utils import secure_filename
@@ -561,6 +561,7 @@ def filter_customers():
     conn.close()
     return jsonify(customers)
 
+
 def add_new_vendor():
     try:
         data = request.json
@@ -598,7 +599,7 @@ def add_new_vendor():
             INSERT INTO vendors (user_id,first_name, last_name, phone, email, password, shop_name, shop_address)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """, (user_id,first_name, last_name, phone, email, password, shop_name, shop_address))
+        """, (user_id, first_name, last_name, phone, email, password, shop_name, shop_address))
         vendor_id = cursor.fetchone()["id"]
         conn.commit()
         cursor.close()
@@ -625,6 +626,7 @@ def get_vendors():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 def get_vendor(vendor_id):
     try:
         conn = get_db_connection()
@@ -642,6 +644,7 @@ def get_vendor(vendor_id):
             return jsonify({"message": "Vendor not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 def update_vendor(vendor_id):
     try:
@@ -667,6 +670,7 @@ def update_vendor(vendor_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 def delete_vendor(vendor_id):
     try:
         conn = get_db_connection()
@@ -679,5 +683,850 @@ def delete_vendor(vendor_id):
         conn.close()
 
         return jsonify({"message": "Vendor deleted successfully!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def product_review():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if request.method == 'GET':
+        cursor.execute("SELECT * FROM product_review")
+        reviews = cursor.fetchall()
+        conn.close()
+        return jsonify(reviews)
+
+    elif request.method == 'POST':
+        data = request.json
+        cursor.execute("""
+            INSERT INTO product_review (seller_user_id, product_id, user_login_id, content, Rating)
+            VALUES (%s, %s, %s, %s, %s) RETURNING id
+        """, (data['seller_user_id'], data['product_id'], data['user_login_id'], data.get('content'), data['Rating']))
+        review_id = cursor.fetchone()[0]
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Review added", "review_id": review_id}), 201
+
+    elif request.method == 'PUT':
+        data = request.json
+        cursor.execute("""
+            UPDATE product_review
+            SET content = %s, Rating = %s
+            WHERE id = %s
+        """, (data['content'], data['Rating'], data['id']))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Review updated"})
+
+    elif request.method == 'DELETE':
+        data = request.json
+        cursor.execute("DELETE FROM product_review WHERE id = %s", (data['id'],))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Review deleted"})
+
+
+def cart():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if request.method == 'GET':
+        user_id = request.args.get('user_id')
+        cursor.execute("SELECT * FROM cart WHERE user_id = %s", (user_id,))
+        cart_items = cursor.fetchall()
+        conn.close()
+        return jsonify(cart_items)
+
+    elif request.method == 'POST':
+        data = request.json
+        cursor.execute("""
+            INSERT INTO cart (user_id, product_id, quantity) 
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id, product_id) DO UPDATE 
+            SET quantity = cart.quantity + EXCLUDED.quantity
+            RETURNING id
+        """, (data['user_id'], data['product_id'], data.get('quantity', 1)))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Item added to cart"}), 201
+
+    elif request.method == 'PUT':
+        data = request.json
+        cursor.execute("""
+            UPDATE cart SET quantity = %s WHERE id = %s
+        """, (data['quantity'], data['id']))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Cart updated"})
+
+    elif request.method == 'DELETE':
+        data = request.json
+        cursor.execute("DELETE FROM cart WHERE id = %s", (data['id'],))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Item removed from cart"})
+
+
+def add_brands():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        data = request.form.to_dict()
+        files = request.files
+
+        brand_name = data.get("Brand_name")
+        image_alt_name = data.get("image_alt_name")
+        image_file = files.get("image_filename")
+
+        if not brand_name:
+            return jsonify({"error": "Brand name is required"}), 400
+
+        image_filename = None
+        if image_file:
+            image_filename = f"{brand_name}_{image_file.filename}"
+            image_path = os.path.join('./uploads/brands_image', image_filename)
+            os.makedirs('./uploads/brands_image', exist_ok=True)
+            image_file.save(image_path)
+        cursor.execute(
+            """
+            INSERT INTO brands (Brand_name, image_alt_name, image_filename)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (Brand_name) 
+            DO UPDATE SET image_alt_name = EXCLUDED.image_alt_name, 
+            image_filename = EXCLUDED.image_filename
+            """,
+            (brand_name, image_alt_name, image_filename)
+        )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Brand saved successfully", "brand": brand_name}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def get_brands():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM brands")
+        brands = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"brands": brands}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def edit_brand(brand_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        data = request.form.to_dict()
+        files = request.files
+
+        brand_name = data.get("Brand_name")
+        image_alt_name = data.get("image_alt_name")
+        image_file = files.get("image_filename")
+
+        if not brand_name:
+            return jsonify({"error": "Brand name is required"}), 400
+
+        image_filename = None
+
+        if image_file:
+            image_filename = f"{brand_name}_{image_file.filename}"
+            image_path = os.path.join('./uploads/brands_image', image_filename)
+            image_file.save(image_path)
+
+        # Update database
+        cursor.execute(
+            "UPDATE brands SET Brand_name = %s, image_alt_name = %s, image_filename = %s WHERE id = %s",
+            (brand_name, image_alt_name, image_filename, brand_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Brand updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def delete_brand(brand_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if brand exists
+        cursor.execute("SELECT image_filename FROM brands WHERE id = %s", (brand_id,))
+        brand = cursor.fetchone()
+
+        if not brand:
+            return jsonify({"error": "Brand not found"}), 404
+
+        if brand[0]:
+            image_path = os.path.join('./uploads/brands_image', brand[0])
+            if os.path.exists(image_path):
+                os.remove(image_path)
+
+        # Delete brand from database
+        cursor.execute("DELETE FROM brands WHERE id = %s", (brand_id,))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Brand deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def get_category():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        search_term = request.args.get('search', '')
+
+        if search_term:
+            cursor.execute("SELECT * FROM categories WHERE name ILIKE %s ORDER BY priority ASC", (f"%{search_term}%",))
+        else:
+            cursor.execute("SELECT * FROM categories ORDER BY priority ASC")
+
+        categories = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"categories": categories}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def add_category():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        data = request.form.to_dict()
+        files = request.files
+        name = data.get("name")
+        priority = data.get("priority", 1)
+        home_category = data.get("home_category", "false").lower() == "true"
+        if not name:
+            return jsonify({"error": "Category name is required"}), 400
+
+        image_path = None
+
+        if 'image' in files:
+            image_file = files['image']
+            image_filename = f"{name.replace(' ', '_')}_{image_file.filename}"
+            image_path = os.path.join("./uploads/category", image_filename)
+            os.makedirs("./uploads/category", exist_ok=True)
+            image_file.save(image_path)
+
+        # Insert into database
+        cursor.execute(
+            "INSERT INTO categories (name, priority, image, home_category) VALUES (%s, %s, %s, %s)",
+            (name, priority, image_path, home_category)
+        )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Category added successfully"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def edit_category(category_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        data = request.form.to_dict()
+        files = request.files
+
+        name = data.get("name")
+        priority = data.get("priority", 1)
+        home_category = data.get("home_category", "false").lower() == "true"
+
+        if not name:
+            return jsonify({"error": "Category name is required"}), 400
+
+        image_filename = None
+
+        if 'image' in files:
+            image_file = files['image']
+            image_filename = f"{name.replace(' ', '_')}_{image_file.filename}"
+            image_path = os.path.join("./uploads/category", image_filename)
+            os.makedirs("./uploads/category", exist_ok=True)
+            image_file.save(image_path)
+
+        cursor.execute(
+            "UPDATE categories SET name = %s, priority = %s, image = %s, home_category = %s WHERE id = %s",
+            (name, priority, image_filename, home_category, category_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Category updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def delete_category(category_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT image FROM categories WHERE id = %s", (category_id,))
+        category = cursor.fetchone()
+
+        if not category:
+            return jsonify({"error": "Category not found"}), 404
+
+        if category[0]:
+            image_path = os.path.join("./uploads/category", category[0])
+            if os.path.exists(image_path):
+                os.remove(image_path)
+
+        cursor.execute("DELETE FROM categories WHERE id = %s", (category_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Category deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def add_subcategory():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        data = request.form.to_dict()
+
+        name = data.get("name")
+        category_id = data.get("category_id")
+        priority = int(data.get("priority", 1))
+
+        if not name or not category_id:
+            return jsonify({"error": "Subcategory name and category_id are required"}), 400
+
+        cursor.execute(
+            "INSERT INTO sub_categories (name, category_id, priority) VALUES (%s, %s, %s) RETURNING *",
+            (name, category_id, priority)
+        )
+        new_subcategory = cursor.fetchone()
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify(new_subcategory), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def get_subcategories():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("SELECT * FROM sub_categories")
+        subcategories = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(subcategories), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def update_subcategory(id):
+    """Update an existing subcategory."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        data = request.json
+        name = data.get("name")
+        category_id = data.get("category_id")
+        priority = int(data.get("priority", 1))
+
+        if not name or not category_id:
+            return jsonify({"error": "Subcategory name and category_id are required"}), 400
+
+        cursor.execute("SELECT id FROM sub_categories WHERE id = %s", (id,))
+        subcategory = cursor.fetchone()
+        if not subcategory:
+            return jsonify({"error": "Subcategory not found"}), 404
+
+        cursor.execute(
+            "UPDATE sub_categories SET name = %s, category_id = %s, priority = %s WHERE id = %s RETURNING *",
+            (name, category_id, priority, id)
+        )
+        updated_subcategory = cursor.fetchone()
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify(updated_subcategory), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def delete_subcategory(id):
+    """Delete a subcategory."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id FROM sub_categories WHERE id = %s", (id,))
+        subcategory = cursor.fetchone()
+
+        if not subcategory:
+            return jsonify({"error": "Subcategory not found"}), 404
+
+        cursor.execute("DELETE FROM sub_categories WHERE id = %s RETURNING id", (id,))
+        deleted = cursor.fetchone()
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Subcategory deleted"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def create_sub_sub_category():
+    data = request.json
+    name = data.get("name")
+    sub_category_id = data.get("sub_category_id")
+    category_id = data.get("category_id")
+    priority = data.get("priority", 1)
+
+    if not name or not sub_category_id or not category_id:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO sub_sub_categories (name, sub_category_id, category_id, priority) VALUES (%s, %s, %s, %s) RETURNING id",
+        (name, sub_category_id, category_id, priority),
+    )
+    new_id = cursor.fetchone()[0]
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"message": "SubSubCategory created successfully", "id": new_id}), 201
+
+
+def get_all_sub_sub_categories():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, sub_category_id, category_id, priority FROM sub_sub_categories ORDER BY priority")
+    sub_sub_categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify([
+        {"id": sub[0], "name": sub[1], "sub_category_id": sub[2], "category_id": sub[3], "priority": sub[4]}
+        for sub in sub_sub_categories
+    ])
+
+
+def get_sub_sub_category(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, sub_category_id, category_id, priority FROM sub_sub_categories WHERE id = %s",
+                   (id,))
+    sub_sub_category = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if sub_sub_category:
+        return jsonify({"id": sub_sub_category[0], "name": sub_sub_category[1], "sub_category_id": sub_sub_category[2],
+                        "category_id": sub_sub_category[3], "priority": sub_sub_category[4]})
+    else:
+        return jsonify({"error": "SubSubCategory not found"}), 404
+
+
+def update_sub_sub_category(id):
+    data = request.json
+    name = data.get("name")
+    sub_category_id = data.get("sub_category_id")
+    category_id = data.get("category_id")
+    priority = data.get("priority", 1)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE sub_sub_categories SET name = %s, sub_category_id = %s, category_id = %s, priority = %s WHERE id = %s RETURNING id",
+        (name, sub_category_id, category_id, priority, id),
+    )
+
+    if cursor.rowcount == 0:
+        return jsonify({"error": "SubSubCategory not found"}), 404
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"message": "SubSubCategory updated successfully"}), 200
+
+
+def delete_sub_sub_category(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM sub_sub_categories WHERE id = %s RETURNING id", (id,))
+
+    if cursor.rowcount == 0:
+        return jsonify({"error": "SubSubCategory not found"}), 404
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify("Deleted Successfully"), 200
+
+
+def list_files():
+    UPLOAD_FOLDER = os.path.join(r'API_e-commerce\uploads')
+    file_structure = []
+    for root, dirs, files in os.walk(UPLOAD_FOLDER):
+        relative_path = os.path.relpath(root, UPLOAD_FOLDER)
+        if relative_path == ".":
+            relative_path = ""
+        folder_content = {
+            "folder": relative_path,
+            "subfolders": dirs,
+            "files": [os.path.join(relative_path, file) for file in files]
+        }
+        file_structure.append(folder_content)
+    return jsonify(file_structure)
+
+
+def upload_file():
+    UPLOAD_FOLDER = os.path.join(r'API_e-commerce\uploads')
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files['file']
+    folder = request.form.get('folder', '')
+
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        # Secure the filename and create full path
+        filename = secure_filename(file.filename)
+        folder_path = os.path.join(UPLOAD_FOLDER, folder)
+        os.makedirs(folder_path, exist_ok=True)
+        full_path = os.path.join(folder_path, filename)
+
+        # Save the file
+        file.save(full_path)
+        return jsonify({"message": "File uploaded successfully"}), 201
+
+
+def get_attributes():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM attributes")
+    attributes = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify([{"id": attr[0], "name": attr[1]} for attr in attributes])
+
+
+def add_attribute():
+    data = request.json
+    name = data.get("name")
+
+    if not name:
+        return jsonify({"error": "Attribute name is required"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO attributes (name) VALUES (%s) RETURNING id", (name,))
+    new_id = cursor.fetchone()[0]
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"id": new_id, "name": name}), 201
+
+
+def update_attribute(id):
+    data = request.json
+    name = data.get("name")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE attributes SET name = %s WHERE id = %s RETURNING id", (name, id))
+    updated_id = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    if updated_id:
+        return jsonify({"id": id, "name": name})
+    else:
+        return jsonify({"error": "Attribute not found"}), 404
+
+
+def delete_attribute(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM attributes WHERE id = %s RETURNING id", (id,))
+    deleted_id = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    if deleted_id:
+        return jsonify({"message": "Attribute deleted successfully"})
+    else:
+        return jsonify({"error": "Attribute not found"}), 404
+
+
+def get_notifications():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM notifications ORDER BY id DESC")
+    notifications = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(notifications)
+
+
+def add_notification():
+    data = request.json
+    title = data.get('title')
+    description = data.get('description')
+    image = data.get('image', '')
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("INSERT INTO notifications (title, description, image) VALUES (%s, %s, %s) RETURNING id",
+                (title, description, image))
+    new_id = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"message": "Notification added", "id": new_id}), 201
+
+
+def get_notifications():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM push_notifications")
+    notifications = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(notifications)
+
+
+def update_notification(id):
+    data = request.json
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE notifications
+        SET title=%s, description=%s, image=%s, count=%s, status=%s
+        WHERE id=%s
+    """, (
+        data['title'], data['description'], data.get('image', ''), data.get('count', 1), data.get('status', True), id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({"message": "Notification updated successfully"})
+
+
+def delete_notification(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM notifications WHERE id = %s", (id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"message": "Notification deleted"}), 200
+
+
+def create_push_notification():
+    data = request.json
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            INSERT INTO push_notifications (notification_id, language, notification_type, message, enabled)
+            VALUES (%s, %s, %s, %s, %s) RETURNING id
+        """, (data['notification_id'], data['language'], data['notification_type'], data['message'], data['enabled']))
+
+        notification_id = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Notification created", "id": notification_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def get_push_notifications():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM push_notifications")
+        notifications = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        notifications_list = []
+        for row in notifications:
+            notifications_list.append({
+                "id": row[0],
+                "notification_id": row[1],
+                "language": row[2],
+                "notification_type": row[3],
+                "message": row[4],
+                "enabled": row[5]
+            })
+        return jsonify(notifications_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def update_push_notification(id):
+    data = request.json
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE push_notifications
+            SET language=%s, notification_type=%s, message=%s, enabled=%s
+            WHERE id=%s
+        """, (data['language'], data['notification_type'], data['message'], data['enabled'], id))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Notification updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def delete_push_notification(id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM push_notifications WHERE id = %s", (id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Notification deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def create_announcement():
+    data = request.json
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO announcements (status, background_color, text_color, announcement_text)
+            VALUES (%s, %s, %s, %s) RETURNING id
+        """, (data['status'], data['backgroundColor'], data['textColor'], data['announcementText']))
+
+        announcement_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Announcement created", "id": announcement_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def get_announcements():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("select * from announcements")
+        announcements = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        announcements_list = [
+            {
+                "id": row["id"],  #
+                "status": row["status"],
+                "backgroundColor": row["background_color"],
+                "textColor": row["text_color"],
+                "announcementText": row["announcement_text"]
+            }
+            for row in announcements
+        ]
+
+        return jsonify(announcements_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def update_announcement(id):
+    data = request.json
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE announcements
+            SET status=%s, background_color=%s, text_color=%s, announcement_text=%s
+            WHERE id=%s
+        """, (data['status'], data['backgroundColor'], data['textColor'], data['announcementText'], id))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Announcement updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def delete_announcement(id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM announcements WHERE id = %s", (id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Announcement deleted"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -33,7 +33,6 @@ const AddNewProduct = () => {
     productSku: '',
     unit: '',
 
-    // Pricing & Inventory 
     unitPrice: '',
     minimumOrderQty: '',
     currentStockQty: '',
@@ -44,12 +43,11 @@ const AddNewProduct = () => {
     shippingCost: '',
     shippingCostMultiply: false,
 
-    // Images & Media
+
     productThumbnail: null,
     additionalImages: [],
 
 
-    // SEO Settings
     metaTitle: '',
     metaDescription: ''
   });
@@ -59,27 +57,27 @@ const AddNewProduct = () => {
     const file = event.target.files[0];
 
     if (file) {
-      // Validate file size (max 2MB)
+
       if (file.size > 2 * 1024 * 1024) {
         alert('File size should not exceed 2MB');
         return;
       }
 
-      // Validate file type
+
       const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         alert('Please upload a valid image (jpg, png, or webp)');
         return;
       }
 
-      // Create file reader to generate preview
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
       };
       reader.readAsDataURL(file);
 
-      // Update form data with the file
+
       setFormData(prev => ({
         ...prev,
         [event.target.name === 'productThumbnail' ? 'productThumbnail' : 'additionalImages']:
@@ -113,7 +111,7 @@ const AddNewProduct = () => {
   };
 
   const generateSku = () => {
-    // Simple SKU generation logic
+
     const timestamp = new Date().getTime().toString().slice(-6);
     const randomStr = Math.random().toString(36).substring(2, 5).toUpperCase();
     setFormData(prev => ({
@@ -125,57 +123,54 @@ const AddNewProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Retrieve authentication token from localStorage
+
       const token = localStorage.getItem('token');
 
-      // Verify token exists
+
       if (!token) {
         alert('Please log in to add a product');
         return;
       }
 
-      // Create FormData object
       const formDataToSend = new FormData();
 
-      // Append all text form data
       Object.keys(formData).forEach(key => {
-        // Only append non-file data
+
         if (!(formData[key] instanceof File || formData[key] instanceof Array)) {
           formDataToSend.append(key, formData[key]);
         }
       });
 
-      // Append product thumbnail
+
       if (formData.productThumbnail) {
         formDataToSend.append('productThumbnail', formData.productThumbnail);
       }
 
-      // Append additional images
+   
       if (formData.additionalImages && formData.additionalImages.length > 0) {
         formData.additionalImages.forEach((file) => {
           formDataToSend.append('additionalImages', file);
         });
       }
 
-      // Send the form data to the backend
+
       const response = await fetch(`${config.apiUrl}/seller-add-new-product`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}` // Include token for authentication
+          'Authorization': `Bearer ${token}` 
         },
         body: formDataToSend
       });
 
-      // Parse the response
+
       const data = await response.json();
 
-      // Handle response
       if (response.ok) {
         alert('Product added successfully!');
-        // Reset form after successful submission
+
         handleReset();
       } else {
-        // Handle error response from server
+
         alert(data.error || 'Failed to add product');
       }
     } catch (error) {
@@ -185,7 +180,7 @@ const AddNewProduct = () => {
   };
 
   const handleReset = () => {
-    // Reset form to initial state
+
     setFormData({
       productName: '',
       productDescription: '',

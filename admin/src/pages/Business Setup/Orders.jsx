@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import config from '../../config';
 
 const Toggle = ({ isEnabled, onToggle }) => (
   <button 
@@ -17,16 +18,46 @@ const InfoIcon = () => (
 
 const Orders = () => {
   const [settings, setSettings] = useState({
-    orderDeliveryVerification: true,
-    minimumOrderAmount: true,
-    showBillingAddress: true,
-    freeDelivery: true,
-    guestCheckout: true
+    order_delivery_verification: true,
+    minimum_order_amount: true,
+    show_billing_address: true,
+    free_delivery: true,
+    guest_checkout: true,
+    refund_days: 5,
+    delivery_responsibility: 'Admin',
+    free_delivery_over: 1000.00
   });
 
-  const [refundDays, setRefundDays] = useState('5');
-  const [deliveryResponsibility, setDeliveryResponsibility] = useState('Admin');
-  const [freeDeliveryOver, setFreeDeliveryOver] = useState('1000');
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState({ message: '', isError: false });
+
+  // Fetch order settings on component mount
+  useEffect(() => {
+    fetchOrderSettings();
+  }, []);
+
+  const fetchOrderSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${config.apiUrl}/get_order_settings`);
+      if (!response.ok) {
+        throw new Error(`Error fetching settings: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update state with fetched settings
+      setSettings(data);
+    } catch (error) {
+      console.error("Failed to fetch order settings:", error);
+      setSaveStatus({
+        message: "Failed to load settings. Please try again.",
+        isError: true
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggle = (setting) => {
     setSettings(prev => ({
@@ -34,6 +65,53 @@ const Orders = () => {
       [setting]: !prev[setting]
     }));
   };
+
+  const handleInputChange = (field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setSaveStatus({ message: 'Saving...', isError: false });
+      
+      const response = await fetch(`${config.apiUrl}/save_order_settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error saving settings: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setSaveStatus({ message: result.message, isError: false });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSaveStatus({ message: '', isError: false });
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      setSaveStatus({
+        message: "Failed to save settings. Please try again.",
+        isError: true
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-4 flex justify-center items-center h-64">
+        <p className="text-gray-700">Loading settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -45,6 +123,13 @@ const Orders = () => {
         <h1 className="text-xl font-semibold text-gray-800">Order Settings</h1>
       </div>
 
+      {/* Status message */}
+      {saveStatus.message && (
+        <div className={`mb-4 p-3 rounded-md ${saveStatus.isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {saveStatus.message}
+        </div>
+      )}
+
       {/* Settings Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {/* Order Delivery Verification */}
@@ -54,8 +139,8 @@ const Orders = () => {
             <InfoIcon />
           </div>
           <Toggle 
-            isEnabled={settings.orderDeliveryVerification}
-            onToggle={() => handleToggle('orderDeliveryVerification')}
+            isEnabled={settings.order_delivery_verification}
+            onToggle={() => handleToggle('order_delivery_verification')}
           />
         </div>
 
@@ -66,8 +151,8 @@ const Orders = () => {
             <InfoIcon />
           </div>
           <Toggle 
-            isEnabled={settings.minimumOrderAmount}
-            onToggle={() => handleToggle('minimumOrderAmount')}
+            isEnabled={settings.minimum_order_amount}
+            onToggle={() => handleToggle('minimum_order_amount')}
           />
         </div>
 
@@ -78,8 +163,8 @@ const Orders = () => {
             <InfoIcon />
           </div>
           <Toggle 
-            isEnabled={settings.showBillingAddress}
-            onToggle={() => handleToggle('showBillingAddress')}
+            isEnabled={settings.show_billing_address}
+            onToggle={() => handleToggle('show_billing_address')}
           />
         </div>
 
@@ -90,8 +175,8 @@ const Orders = () => {
             <InfoIcon />
           </div>
           <Toggle 
-            isEnabled={settings.freeDelivery}
-            onToggle={() => handleToggle('freeDelivery')}
+            isEnabled={settings.free_delivery}
+            onToggle={() => handleToggle('free_delivery')}
           />
         </div>
 
@@ -101,8 +186,8 @@ const Orders = () => {
             <span className="text-gray-700">Free Delivery Responsibility</span>
           </div>
           <select 
-            value={deliveryResponsibility}
-            onChange={(e) => setDeliveryResponsibility(e.target.value)}
+            value={settings.delivery_responsibility}
+            onChange={(e) => handleInputChange('delivery_responsibility', e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md"
           >
             <option value="Admin">Admin</option>
@@ -117,10 +202,12 @@ const Orders = () => {
             <InfoIcon />
           </div>
           <input
-            type="text"
-            value={freeDeliveryOver}
-            onChange={(e) => setFreeDeliveryOver(e.target.value)}
+            type="number"
+            value={settings.free_delivery_over}
+            onChange={(e) => handleInputChange('free_delivery_over', parseFloat(e.target.value))}
             className="w-full p-2 border border-gray-300 rounded-md"
+            step="0.01"
+            min="0"
           />
         </div>
 
@@ -130,10 +217,11 @@ const Orders = () => {
             <span className="text-gray-700">Refund Order Validity (Days)</span>
           </div>
           <input
-            type="text"
-            value={refundDays}
-            onChange={(e) => setRefundDays(e.target.value)}
+            type="number"
+            value={settings.refund_days}
+            onChange={(e) => handleInputChange('refund_days', parseInt(e.target.value))}
             className="w-full p-2 border border-gray-300 rounded-md"
+            min="0"
           />
         </div>
 
@@ -144,15 +232,18 @@ const Orders = () => {
             <InfoIcon />
           </div>
           <Toggle 
-            isEnabled={settings.guestCheckout}
-            onToggle={() => handleToggle('guestCheckout')}
+            isEnabled={settings.guest_checkout}
+            onToggle={() => handleToggle('guest_checkout')}
           />
         </div>
       </div>
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+        <button 
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          onClick={handleSaveSettings}
+        >
           Save
         </button>
       </div>

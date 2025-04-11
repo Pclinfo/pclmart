@@ -12,7 +12,7 @@ const BusinessPages = () => {
   const [activeContent, setActiveContent] = useState(' ');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Store separate content for each policy tab
+
   const [policyContents, setPolicyContents] = useState({
     terms: '',
     privacy: '',
@@ -42,17 +42,12 @@ const BusinessPages = () => {
     { id: 'authentic', title: 'Authentic product', value: '100% Authentic Products' }
   ];
 
-  // Function to update content for a specific policy
+
   const updatePolicyContent = (policyId, content) => {
-    const updatedContents = {
-      ...policyContents,
+    setPolicyContents(prevContents => ({
+      ...prevContents,
       [policyId]: content
-    };
-
-    setPolicyContents(updatedContents);
-
-    // Save to localStorage for persistence across refreshes
-    localStorage.setItem('policyContents', JSON.stringify(updatedContents));
+    }));
   };
 
   const showToast = (message, type = 'success') => {
@@ -79,10 +74,6 @@ const BusinessPages = () => {
       }
 
       const data = await response.json();
-
-      // Update localStorage after successful save
-      localStorage.setItem('policyContents', JSON.stringify(policyContents));
-
       showToast(data.message || 'Policy saved successfully', 'success');
     } catch (error) {
       showToast('Failed to save policy. Please try again.', 'error');
@@ -112,56 +103,45 @@ const BusinessPages = () => {
     updatePolicyContent(activeTab, newText);
   };
 
-  // On component mount: Load data from localStorage first, then from API
+
+  const fetchPolicyContent = async (policyId) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/show_terms/${policyId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data[policyId] || '';
+      }
+      return '';
+    } catch (error) {
+      console.error(`Failed to fetch ${policyId} content:`, error);
+      return '';
+    }
+  };
+
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
 
-      // First try to load from localStorage (for immediate display after refresh)
-      const savedData = localStorage.getItem('policyContents');
-      if (savedData) {
-        try {
-          const parsedData = JSON.parse(savedData);
-          setPolicyContents(parsedData);
-        } catch (error) {
-          console.error('Error parsing saved policy data:', error);
-        }
-      }
-
-      // Then fetch fresh data from API
       try {
+
         const policyTabs = tabs
           .filter(tab => tab.id !== 'faq' && tab.id !== 'reliability')
           .map(tab => tab.id);
 
         const updatedContents = { ...policyContents };
-        let dataChanged = false;
 
         for (const policyId of policyTabs) {
-          try {
-            const response = await fetch(`${config.apiUrl}/terms&conditions/${policyId}`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data && data[policyId]) {
-                updatedContents[policyId] = data[policyId];
-                dataChanged = true;
-              }
-            }
-          } catch (error) {
-            console.error(`Failed to fetch ${policyId} content:`, error);
-          }
+          updatedContents[policyId] = await fetchPolicyContent(policyId);
         }
 
-        if (dataChanged) {
-          setPolicyContents(updatedContents);
-          localStorage.setItem('policyContents', JSON.stringify(updatedContents));
-        }
+        setPolicyContents(updatedContents);
       } catch (error) {
         console.error('Failed to fetch policy contents:', error);
       } finally {
@@ -171,6 +151,25 @@ const BusinessPages = () => {
 
     loadData();
   }, []);
+
+  // Re-fetch content when active tab changes
+  useEffect(() => {
+    const fetchActiveTabContent = async () => {
+      if (activeTab !== 'faq' && activeTab !== 'reliability') {
+        setIsLoading(true);
+        try {
+          const content = await fetchPolicyContent(activeTab);
+          updatePolicyContent(activeTab, content);
+        } catch (error) {
+          console.error(`Failed to fetch ${activeTab} content:`, error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchActiveTabContent();
+  }, [activeTab]);
 
   return (
     <div>

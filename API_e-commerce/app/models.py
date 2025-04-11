@@ -2,7 +2,7 @@ from flask import jsonify
 from app.database import get_db_connection
 import os
 
-UPLOAD_FOLDER = './uploads'
+UPLOAD_FOLDER = r'API_e-commerce\uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def get_dashboard_data(userid):

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import config from '../../config';
 
 const PaymentOptions = () => {
   const [paymentMethods, setPaymentMethods] = useState({
@@ -6,17 +8,79 @@ const PaymentOptions = () => {
     digitalPayment: false,
     offlinePayment: false
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState({
+    show: false,
+    message: '',
+    isError: false
+  });
 
-  const handleToggle = (method) => {
-    setPaymentMethods(prev => ({
-      ...prev,
-      [method]: !prev[method]
-    }));
+  // Fetch initial payment options when component mounts
+  useEffect(() => {
+    fetchPaymentOptions();
+  }, []);
+
+  const fetchPaymentOptions = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${config.apiUrl}/get_payment`);
+      setPaymentMethods(response.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching payment options:', error);
+      setIsLoading(false);
+      showStatusMessage('Failed to load payment options', true);
+    }
   };
+
+  const showStatusMessage = (message, isError = false) => {
+    setSaveStatus({
+      show: true,
+      message,
+      isError
+    });
+    
+    // Auto hide the message after 3 seconds
+    setTimeout(() => {
+      setSaveStatus(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+
+  const handleToggle = async (method) => {
+    try {
+      // Update local state optimistically
+      const updatedMethods = {
+        ...paymentMethods,
+        [method]: !paymentMethods[method]
+      };
+      
+      setPaymentMethods(updatedMethods);
+      
+      // Save to server immediately
+      await axios.post(`${config.apiUrl}/save_payment`, updatedMethods);
+      showStatusMessage(`${method.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} updated successfully`);
+    } catch (error) {
+      console.error(`Error updating ${method}:`, error);
+      
+      // Revert the change on error
+      setPaymentMethods(paymentMethods);
+      showStatusMessage(`Failed to update ${method.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}`, true);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="w-full max-w-4xl mx-auto p-4 text-center">Loading payment options...</div>;
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
       <h2 className="text-lg font-medium mb-4">Payment Methods</h2>
+      
+      {saveStatus.show && (
+        <div className={`mb-4 p-2 rounded ${saveStatus.isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {saveStatus.message}
+        </div>
+      )}
       
       <div className="space-y-3 md:space-y-4">
         {/* Cash on delivery option */}
@@ -87,12 +151,6 @@ const PaymentOptions = () => {
             }`} />
           </button>
         </div>
-      </div>
-
-      <div className="mt-6 flex justify-end">
-        <button className="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-          SAVE
-        </button>
       </div>
     </div>
   );

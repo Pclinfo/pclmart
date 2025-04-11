@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
-import axios from 'axios'; // Make sure axios is installed
+import axios from 'axios'; 
 import config from '../../config';
 
 const DealsOfTheDay = () => {
@@ -9,7 +9,7 @@ const DealsOfTheDay = () => {
   const [activeLanguage, setActiveLanguage] = useState('English(EN)');
   const [searchQuery, setSearchQuery] = useState('');
   const [deals, setDeals] = useState([]);
-  const [products, setProducts] = useState([]); // For product dropdown
+  const [products, setProducts] = useState([]); 
   const [formData, setFormData] = useState({
     title: '',
     product: '',
@@ -25,7 +25,7 @@ const DealsOfTheDay = () => {
     { id: 'in', name: 'Hindi(IN)' }
   ];
 
-  // Fetch deals from the backend
+
   const fetchDeals = async () => {
     try {
       const response = await axios.get(`${config.apiUrl}/day_deals`);
@@ -34,7 +34,7 @@ const DealsOfTheDay = () => {
       } else {
         console.error("Failed to fetch deals:", response.data.error);
       }
-      console.log(response); // Moved inside the try block
+      console.log(response); 
     } catch (error) {
       console.error("Error fetching deals:", error);
     }
@@ -42,8 +42,7 @@ const DealsOfTheDay = () => {
 
   useEffect(() => {
     fetchDeals();
-    // Uncomment this if you have a products API
-    // fetchProducts();
+  
   }, []);
 
   const handleInputChange = (e) => {
@@ -59,7 +58,7 @@ const DealsOfTheDay = () => {
 
     try {
       if (editMode) {
-        // Update existing deal
+   
         const response = await axios.put(`${config.apiUrl}/day_deals/${editId}`, formData);
         if (response.data.success) {
           resetForm();
@@ -68,7 +67,7 @@ const DealsOfTheDay = () => {
           console.error("Failed to update deal:", response.data.error);
         }
       } else {
-        // Add new deal
+    
         const response = await axios.post(`${config.apiUrl}/day_deals`, formData);
         if (response.data.success) {
           resetForm();
@@ -139,11 +138,9 @@ const DealsOfTheDay = () => {
   };
 
   const handleSearch = () => {
-    // If you want to implement server-side search, you can make an API call here
-    // For client-side search, this function is optional as we're already filtering in the render
+
   };
 
-  // Filter deals based on search query
   const filteredDeals = deals.filter(deal =>
     deal.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );

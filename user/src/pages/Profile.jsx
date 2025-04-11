@@ -18,7 +18,7 @@ const Profile = () => {
         email: '',
         newPassword: '',
         confirmPassword: '',
-        profile_picture: null // Make sure this is part of the formData
+        profile_picture: null 
     });
 
     useEffect(() => {
@@ -85,17 +85,16 @@ const Profile = () => {
 
         const file = e.target.files[0];
         if (file) {
-            // Clean up previous preview URL if it exists
+
             if (typeof profilePicture === 'string' && profilePicture.startsWith('blob:')) {
                 URL.revokeObjectURL(profilePicture);
             }
 
-            // Create a preview URL for the image
             const previewUrl = URL.createObjectURL(file);
             setProfilePicture(previewUrl);
             setFormData(prev => ({
                 ...prev,
-                profile_picture: file  // Store the actual file object
+                profile_picture: file 
             }));
         }
     };
@@ -110,7 +109,6 @@ const Profile = () => {
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('user');
 
-        // Validate passwords if changing
         if (formData.newPassword) {
             if (formData.newPassword !== formData.confirmPassword) {
                 alert("Passwords don't match!");
@@ -123,10 +121,9 @@ const Profile = () => {
         }
 
         try {
-            // Create FormData to handle file upload
+
             const formDataToSend = new FormData();
 
-            // Append user data
             formDataToSend.append('name', formData.name);
             formDataToSend.append('email', formData.email);
             formDataToSend.append('phone_number', formData.phone_number || '');
@@ -135,7 +132,6 @@ const Profile = () => {
                 formDataToSend.append('password', formData.newPassword);
             }
 
-            // Handle profile picture
             if (formData.profile_picture instanceof File) {
                 formDataToSend.append('profile_picture', formData.profile_picture);
             }
@@ -149,7 +145,7 @@ const Profile = () => {
             });
 
             if (response.ok) {
-                // Clean up any object URLs we created
+
                 if (typeof profilePicture === 'string' && profilePicture.startsWith('blob:')) {
                     URL.revokeObjectURL(profilePicture);
                 }
@@ -167,7 +163,7 @@ const Profile = () => {
     };
 
     const handleCancel = () => {
-        // Clean up any object URLs we created
+
         if (typeof profilePicture === 'string' && profilePicture.startsWith('blob:')) {
             URL.revokeObjectURL(profilePicture);
         }

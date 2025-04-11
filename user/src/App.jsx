@@ -13,6 +13,7 @@ import RestockRequests from './pages/RestockRequests'
 import WishList from './pages/WishList'
 import MyLoyaltyPoint from './pages/MyLoyaltyPoint'
 import Inbox from './pages/Inbox'
+import Message from './pages/Message';
 import MyAddress from './pages/MyAddress'
 import SupportTicket from './pages/SupportTicket'
 import ReferEarn from './pages/ReferEarn'
@@ -70,6 +71,7 @@ const AppRoutes = () => {
       < Route path="/wishlist" element={<WishList />} />
       < Route path="/loyalty" element={<MyLoyaltyPoint />} />
       < Route path="/inbox" element={<Inbox />} />
+      < Route path="/message" element={<Message />} />
       < Route path="/address" element={<MyAddress />} />
       < Route path="/support" element={<SupportTicket />} />
       < Route path="/refer" element={<ReferEarn />} />

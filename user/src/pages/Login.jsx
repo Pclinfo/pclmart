@@ -54,7 +54,6 @@ const Login = () => {
       [name]: value
     }));
 
-    // Real-time validation
     switch (name) {
       case 'email':
         setErrors(prev => ({ ...prev, email: validateEmail(value) }));

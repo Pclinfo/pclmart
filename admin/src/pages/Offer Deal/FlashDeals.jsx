@@ -11,7 +11,6 @@ const FlashDeals = () => {
   const [flashDealsData, setFlashDealsData] = useState([]);
   const [filteredDeals, setFilteredDeals] = useState([]);
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     startDate: '',
@@ -22,7 +21,7 @@ const FlashDeals = () => {
     status: 'Active'
   });
 
-  // Edit mode state
+
   const [editMode, setEditMode] = useState(false);
   const [currentDealId, setCurrentDealId] = useState(null);
 
@@ -33,7 +32,6 @@ const FlashDeals = () => {
     { id: 'in', name: 'Hindi(IN)' }
   ];
 
-  // Fetch flash deals data from the API
   const fetchFlashDeals = async () => {
     try {
       const response = await axios.get(`${config.apiUrl}/flash-deals`);
@@ -44,7 +42,6 @@ const FlashDeals = () => {
     }
   };
 
-  // Search functionality
   const handleSearch = () => {
     if (searchQuery.trim() === '') {
       setFilteredDeals(flashDealsData);
@@ -56,7 +53,7 @@ const FlashDeals = () => {
     }
   };
 
-  // Handle form input changes
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -65,12 +62,10 @@ const FlashDeals = () => {
     });
   };
 
-  // Format dates for duration
   const formatDuration = (startDate, endDate) => {
     return `${startDate} - ${endDate}`;
   };
 
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -84,14 +79,14 @@ const FlashDeals = () => {
 
     try {
       if (editMode) {
-        // Update existing flash deal
+
         await axios.put(`${config.apiUrl}/flash-deals/${currentDealId}`, dealData);
       } else {
-        // Add new flash deal
+
         await axios.post(`${config.apiUrl}/flash-deals`, dealData);
       }
 
-      // Reset form and fetch updated data
+
       resetForm();
       fetchFlashDeals();
     } catch (error) {
@@ -99,7 +94,7 @@ const FlashDeals = () => {
     }
   };
 
-  // Reset form
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -114,9 +109,9 @@ const FlashDeals = () => {
     setCurrentDealId(null);
   };
 
-  // Edit flash deal
+
   const handleEdit = (deal) => {
-    // Parse duration to get start and end dates
+
     const [startDate, endDate] = deal.duration.split('- ');
 
     setFormData({
@@ -132,7 +127,7 @@ const FlashDeals = () => {
     setCurrentDealId(deal.id);
   };
 
-  // Toggle publication status
+
   const togglePublish = async (deal) => {
     const updatedDeal = {
       ...deal,
@@ -147,7 +142,7 @@ const FlashDeals = () => {
     }
   };
 
-  // Delete flash deal
+
   const handleDelete = async (dealId) => {
     if (window.confirm('Are you sure you want to delete this flash deal?')) {
       try {
@@ -159,18 +154,18 @@ const FlashDeals = () => {
     }
   };
 
-  // Add product to flash deal (placeholder function)
+
   const handleAddProduct = (dealId) => {
-    // This would typically open a modal or redirect to a product selection page
+
     console.log(`Add product to deal ${dealId}`);
   };
 
-  // Load data on component mount
+
   useEffect(() => {
     fetchFlashDeals();
   }, []);
 
-  // Update filtered deals when search query changes
+
   useEffect(() => {
     handleSearch();
   }, [searchQuery]);

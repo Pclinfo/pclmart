@@ -192,8 +192,6 @@ const ProductList = () => {
     }));
   };
 
-
-  // Search and Filtering
   const handleSearch = (event) => {
     const query = event.target.value;
     setSearchQuery(query);
@@ -205,14 +203,13 @@ const ProductList = () => {
     setCurrentPage(1);
   };
 
-  // Pagination
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Action Handlers
+
   const handleViewProduct = async (pid) => {
     try {
       const response = await axios.get(`${config.apiUrl}/product_details/${pid}`);
@@ -271,7 +268,7 @@ const ProductList = () => {
   };
 
   const handleExport = () => {
-    // Implement export functionality
+
     console.log('Exporting products...');
   };
 
@@ -283,7 +280,7 @@ const ProductList = () => {
     setCurrentPage(1);
   };
 
-  // Render Loading State
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -295,7 +292,7 @@ const ProductList = () => {
     );
   }
 
-  // Render Error State
+
   if (error) {
     return (
       <div className="min-h-screen bg-red-50 flex items-center justify-center">

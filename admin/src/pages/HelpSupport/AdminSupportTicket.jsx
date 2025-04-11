@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Eye, Send } from 'lucide-react';
+import { Search, Eye, Send } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
+import config from '../../config';
 
 const AdminSupportTicket = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,14 +20,14 @@ const AdminSupportTicket = () => {
   const fetchTickets = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/tickets`, {
+      const response = await fetch(`${config.apiUrl}/admin_view_ticket`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
       if (response.ok) {
-        setTickets(data.tickets);
+        setTickets(data);
       }
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -42,7 +43,7 @@ const AdminSupportTicket = () => {
         formData.append('attachment', attachment);
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/tickets/${ticketId}/reply`, {
+      const response = await fetch(`${config.apiUrl}/admin/tickets/${ticketId}/reply`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -53,7 +54,6 @@ const AdminSupportTicket = () => {
       if (response.ok) {
         setNewMessage('');
         setAttachment(null);
-        // Refresh ticket data
         fetchTickets();
       }
     } catch (error) {
@@ -62,8 +62,7 @@ const AdminSupportTicket = () => {
   };
 
   const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPriority = selectedPriority === 'All Priority' || ticket.priority === selectedPriority;
     const matchesStatus = selectedStatus === 'All Status' || ticket.status === selectedStatus;
     return matchesSearch && matchesPriority && matchesStatus;
@@ -74,19 +73,18 @@ const AdminSupportTicket = () => {
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4">
           <img
-            src={ticket.profilePicture || '/placeholder-avatar.png'}
+            src="/placeholder-avatar.png"
             alt="Profile"
             className="w-12 h-12 rounded-full"
           />
           <div>
-            <h3 className="font-medium">{ticket.firstName}</h3>
-            <p className="text-sm text-gray-600">{ticket.email}</p>
+            <h3 className="font-medium">User #{ticket.user_id}</h3>
             <div className="mt-2">
               <p className="text-sm"><span className="font-medium">Subject:</span> {ticket.subject}</p>
               <p className="text-sm"><span className="font-medium">Type:</span> {ticket.type}</p>
               <div className="flex space-x-4">
                 <span className="text-sm"><span className="font-medium">Priority:</span> {ticket.priority}</span>
-                <span className="text-sm"><span className="font-medium">Date:</span> {new Date(ticket.submissionDate).toLocaleDateString()}</span>
+                <span className="text-sm"><span className="font-medium">Date:</span> {new Date(ticket.created_at).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
@@ -110,13 +108,13 @@ const AdminSupportTicket = () => {
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-start space-x-4">
                 <img
-                  src={selectedTicket.profilePicture || '/placeholder-avatar.png'}
+                  src="/placeholder-avatar.png"
                   alt="Profile"
                   className="w-12 h-12 rounded-full"
                 />
                 <div>
-                  <h3 className="font-medium">{selectedTicket.firstName}</h3>
-                  <p className="text-sm text-gray-600">{selectedTicket.email}</p>
+                  <h3 className="font-medium">User #{selectedTicket.user_id}</h3>
+                  <p className="text-sm text-gray-600">Ticket #{selectedTicket.pid}</p>
                 </div>
               </div>
               <div className="flex space-x-4">
@@ -132,6 +130,19 @@ const AdminSupportTicket = () => {
             <div className="mb-6">
               <h4 className="font-medium mb-2">Description</h4>
               <p className="text-gray-600">{selectedTicket.description}</p>
+              {selectedTicket.attachment && (
+                <div className="mt-3">
+                  <h4 className="font-medium mb-1">Attachment</h4>
+                  <a 
+                    href={`${config.apiUrl}/${selectedTicket.attachment}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    View Attachment
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="border-t pt-6">
@@ -151,7 +162,7 @@ const AdminSupportTicket = () => {
                       className="text-sm"
                     />
                     <button
-                      onClick={() => handleReplySubmit(selectedTicket.id)}
+                      onClick={() => handleReplySubmit(selectedTicket.pid)}
                       className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
                     >
                       <span>Send Reply</span>
@@ -222,9 +233,15 @@ const AdminSupportTicket = () => {
             </div>
 
             <div className="space-y-4">
-              {filteredTickets.map(ticket => (
-                <TicketCard key={ticket.id} ticket={ticket} />
-              ))}
+              {filteredTickets.length > 0 ? (
+                filteredTickets.map(ticket => (
+                  <TicketCard key={ticket.pid} ticket={ticket} />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No tickets found matching your criteria
+                </div>
+              )}
             </div>
           </div>
         </div>

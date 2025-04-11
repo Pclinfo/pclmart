@@ -475,3 +475,24 @@ def delete_ticket():
     except Exception as e:
         print(f"Error deleting ticket: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+def admin_view_ticket():
+    try:
+
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM customer_ticket")
+        ticket = cursor.fetchall()
+
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
+        return jsonify(ticket), 201
+
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "Failed to delete ticket"}), 500
+
+    finally:
+        cursor.close()
+        conn.close()

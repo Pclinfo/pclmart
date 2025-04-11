@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import config from '../../config';
 
 const Customers = () => {
     const [settings, setSettings] = useState({
+        id: null,
         customerWallet: true,
         loyaltyPoint: true,
         referralEarning: true,
@@ -14,6 +16,43 @@ const Customers = () => {
         minPointToConvert: '200',
         referralEarnings: '0'
     });
+    const [loading, setLoading] = useState(true);
+    const [saveStatus, setSaveStatus] = useState('');
+
+    // Fetch customer settings on component mount
+    useEffect(() => {
+        fetchCustomerSettings();
+    }, []);
+
+    const fetchCustomerSettings = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${config.apiUrl}/customer_settings`);
+            if (response.ok) {
+                const data = await response.json();
+                setSettings({
+                    id: data.id,
+                    customerWallet: data.customer_wallet,
+                    loyaltyPoint: data.loyalty_point,
+                    referralEarning: data.referral_earning,
+                    addRefundToWallet: data.add_refund_to_wallet,
+                    addFundToWallet: data.add_fund_to_wallet,
+                    maxAddFundAmount: data.max_add_fund_amount,
+                    minAddFundAmount: data.min_add_fund_amount,
+                    equivalentPoint: data.equivalent_point,
+                    loyaltyPointEarnPercentage: data.loyalty_point_earn_percentage,
+                    minPointToConvert: data.min_point_to_convert,
+                    referralEarnings: data.referral_earnings
+                });
+            } else {
+                console.log('No settings found or error fetching settings');
+            }
+        } catch (error) {
+            console.error('Error fetching customer settings:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleToggle = (key) => {
         setSettings(prev => ({
@@ -30,14 +69,40 @@ const Customers = () => {
         }));
     };
 
-    // Info Icon component
+    const saveSettings = async () => {
+        try {
+            setSaveStatus('Saving...');
+            const response = await fetch(`${config.apiUrl}/update_customer_settings`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                setSaveStatus('Settings saved successfully!');
+                setTimeout(() => setSaveStatus(''), 3000);
+                // Refetch to ensure we have the latest data
+                fetchCustomerSettings();
+            } else {
+                setSaveStatus(`Error: ${data.error || 'Unknown error'}`);
+                setTimeout(() => setSaveStatus(''), 3000);
+            }
+        } catch (error) {
+            console.error('Error saving customer settings:', error);
+            setSaveStatus('Failed to save settings. Please try again.');
+            setTimeout(() => setSaveStatus(''), 3000);
+        }
+    };
+
     const InfoIcon = () => (
         <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
         </svg>
     );
 
-    // Toggle Switch component
     const ToggleSwitch = ({ isOn, onToggle }) => (
         <button
             type="button"
@@ -51,6 +116,10 @@ const Customers = () => {
             />
         </button>
     );
+
+    if (loading) {
+        return <div className="flex justify-center items-center h-64">Loading customer settings...</div>;
+    }
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-8">
@@ -235,10 +304,16 @@ const Customers = () => {
                 </div>
             </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end">
+            {/* Save Button and Status */}
+            <div className="flex justify-end items-center gap-4">
+                {saveStatus && (
+                    <span className={`text-sm ${saveStatus.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
+                        {saveStatus}
+                    </span>
+                )}
                 <button
                     type="button"
+                    onClick={saveSettings}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                     Save

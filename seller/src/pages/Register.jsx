@@ -27,7 +27,7 @@ const Register = () => {
 
   const location = useLocation();
 
-  // Validation Functions
+
   const validateFullName = (name) => {
     if (!name) return "Full name is required";
     if (name.length < 2) return "Full name must be at least 2 characters";
@@ -36,28 +36,24 @@ const Register = () => {
     return "";
   };
   const validateEmail = (email) => {
-    // Check if email is empty
+
     if (!email) return "Email is required";
 
-    // Trim whitespace
+
     email = email.trim();
 
-    // Check length constraints
+
     if (email.length < 10 || email.length > 320)
       return "Email must be between 5 and 320 characters";
 
-    // More comprehensive regex for email validation
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
-    // Check if email matches the regex pattern
     if (!emailRegex.test(email))
       return "Please enter a valid email address";
 
-    // Additional domain-level validation
     const parts = email.split('@');
     const domain = parts[1];
 
-    // Check for valid top-level domains
     const validTLDs = [
       'com', 'org', 'net', 'edu', 'gov', 'mil', 'int',
       'info', 'biz', 'name', 'pro', 'mobi', 'co', 'us',
@@ -70,7 +66,6 @@ const Register = () => {
     if (!validTLDs.includes(tld))
       return "Please enter a valid email domain";
 
-    // Prevent disposable email domains (optional, you can expand this list)
     const disposableDomains = [
       'mailinator.com', 'temp-mail.org', 'guerrillamail.com',
       'throwawaymail.com', '10minutemail.com'
@@ -79,11 +74,9 @@ const Register = () => {
     if (disposableDomains.includes(domain.toLowerCase()))
       return "Disposable email addresses are not allowed";
 
-    // Check for consecutive dots
     if (email.includes('..'))
       return "Email cannot contain consecutive dots";
 
-    // Passed all validations
     return "";
   };
 
@@ -109,7 +102,6 @@ const Register = () => {
       }));
     }
 
-    // Real-time validation
     switch (name) {
       case 'fullname':
         setErrors(prev => ({ ...prev, fullname: validateFullName(value) }));
@@ -132,14 +124,12 @@ const Register = () => {
 
     setErrors(newErrors);
 
-    // Check if any errors exist
     return !(newErrors.fullname || newErrors.email || newErrors.password);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form before submission
     if (!validateForm()) {
       return;
     }
@@ -158,7 +148,7 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Navigate to login instead of directly logging in
+
         navigate('/login');
       } else {
         setError(data.message || "Registration failed. Try again.");

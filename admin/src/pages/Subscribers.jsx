@@ -9,10 +9,8 @@ const SubscriberList = () => {
 
     const [subscribers] = useState([
         { id: 1, email: 'p********@gmail.com', date: '21 Apr 2022, 04:12 AM' },
-        { id: 2, email: 's********@gmail.com', date: '20 Apr 2022, 05:09 AM' },
-        { id: 3, email: 's********@gmail.com', date: '20 Apr 2022, 05:05 AM' },
-        { id: 4, email: 's********@gmail.com', date: '20 Apr 2022, 05:05 AM' },
-        { id: 5, email: 'a********@gmail.com', date: '11 Apr 2022, 11:22 AM' },
+        { id: 2, email: 's********@gmail.com', date: '20 Apr 2022, 05:09 AM' }
+       
     ]);
 
     return (

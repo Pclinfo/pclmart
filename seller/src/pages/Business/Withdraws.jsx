@@ -6,7 +6,7 @@ const Withdraws = () => {
   const [activeContent, setActiveContent] = useState('');
   const [filter, setFilter] = useState('All');
 
-  // Sample data - replace with actual data source
+
   const withdrawRequests = [
     { id: 1, amount: 500.00, requestTime: 'October 12th, 2022', status: 'Denied' },
     { id: 2, amount: 600.00, requestTime: 'October 12th, 2022', status: 'Approved' },
@@ -40,7 +40,7 @@ const Withdraws = () => {
                   <span className="ml-2 bg-gray-200 px-2 py-1 rounded-full text-sm">3</span>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <select 
+                  <select
                     className="px-4 py-2 border rounded-md bg-white"
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}

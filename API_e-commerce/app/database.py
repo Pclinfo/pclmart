@@ -85,7 +85,7 @@ def create():
    pending_amount decimal(20,2)  Default Null
    );
    
-   Create table if not exists Seller_Registation(
+Create table if not exists Seller_Registation(
     userid int not null,
     FOREIGN KEY (userid) REFERENCES seller_users(id) ON DELETE CASCADE,
     name VARCHAR(255),
@@ -125,7 +125,6 @@ CREATE TABLE IF NOT EXISTS add_product (
     product_type VARCHAR(255) DEFAULT NULL,           
     product_sku VARCHAR(100) DEFAULT NULL,            
     unit VARCHAR(50) DEFAULT NULL,                                
-
     unit_price DECIMAL(10, 2) DEFAULT NULL,           
     minimum_order_qty INT DEFAULT NULL,               
     current_stock_qty INT DEFAULT NULL,               
@@ -186,8 +185,74 @@ CREATE TABLE IF NOT EXISTS product_selling (
     rating_count INT DEFAULT 0, -- Total number of ratings
     new_arrival DATE DEFAULT CURRENT_DATE
 );
-   ''')
-    con.commit()
 
+Create table if not exists brands(
+    id SERIAL PRIMARY KEY,
+    Brand_name varchar(255) unique,
+    image_alt_name text,
+    image_filename text
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    priority INTEGER DEFAULT 1,
+    image TEXT,
+    home_category BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS sub_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    category_id INT NOT NULL,
+    priority INTEGER DEFAULT 1,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sub_sub_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    sub_category_id INT NOT NULL,
+    category_id INT NOT NULL,
+    priority INTEGER DEFAULT 1,
+    FOREIGN KEY (sub_category_id) REFERENCES sub_categories(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE if not exists attributes (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    image TEXT,
+    count INTEGER DEFAULT 1,
+    status BOOLEAN DEFAULT TRUE
+);
+    
+CREATE TABLE IF NOT EXISTS push_notifications (
+    id SERIAL PRIMARY KEY,
+    notification_id INTEGER REFERENCES notifications(id) ON DELETE CASCADE,
+    language VARCHAR(10) NOT NULL CHECK (language IN ('en', 'ar', 'bd', 'hi')),
+    notification_type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    enabled BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE if not exists announcements (
+    id SERIAL PRIMARY KEY,
+    status VARCHAR(10) NOT NULL,
+    background_color VARCHAR(10) NOT NULL,
+    text_color VARCHAR(10) NOT NULL,
+    announcement_text TEXT NOT NULL
+);
+
+
+
+''')
+    con.commit()
 
 create()

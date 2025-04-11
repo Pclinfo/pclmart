@@ -34,7 +34,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
-  // Validation Functions
+
   const validateEmail = (email) => {
     if (!email) return "Email is required";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,7 +55,6 @@ const Login = () => {
       [name]: value
     }));
 
-    // Real-time validation
     switch (name) {
       case 'email':
         setErrors(prev => ({ ...prev, email: validateEmail(value) }));
@@ -74,14 +73,13 @@ const Login = () => {
 
     setErrors(newErrors);
 
-    // Check if any errors exist
+
     return !(newErrors.email || newErrors.password);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form before submission
     if (!validateForm()) {
       return;
     }
@@ -93,7 +91,7 @@ const Login = () => {
       const response = await api.post('/login', formData);
 
       if (response.data && response.data.token) {
-        // Use the login method from AuthContext
+
         login(response.data);
         navigate('/dashboard');
       } else {
@@ -134,7 +132,7 @@ const Login = () => {
             <img
               src={assets}
               alt="PCL Mart Logo"
-              className="h-11 w-auto object-contain"  // Adjust size as needed
+              className="h-11 w-auto object-contain"  
             />
           </div>
 

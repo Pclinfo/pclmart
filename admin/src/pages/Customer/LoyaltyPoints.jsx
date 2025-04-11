@@ -51,17 +51,6 @@ const LoyaltyPoints = () => {
       type: 'Order place',
       reference: '100190',
       createdAt: '2024/01/10'
-    },
-    {
-      id: 5,
-      transactionId: '22064295-06ea-4067-a0a9-a17a5276c9a0',
-      customer: 'David Jack',
-      credit: 23,
-      debit: 0,
-      balance: 424,
-      type: 'Order place',
-      reference: '100186',
-      createdAt: '2024/01/10'
     }
   ];
 

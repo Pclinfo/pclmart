@@ -19,18 +19,16 @@ const SellerList = () => {
   const processImageUrl = (profilePath) => {
     if (!profilePath) return '/default-seller-logo.png';
 
-    // If it's already a full URL, return it
+
     if (profilePath.startsWith('http')) {
       return profilePath;
     }
 
-    // Clean the path
     const cleanPath = profilePath
-      .replace(/^\.\//, '')  // Remove leading ./
-      .replace(/^\/+/, '')   // Remove multiple leading slashes
+      .replace(/^\.\//, '')  
+      .replace(/^\/+/, '')   
       .trim();
 
-    // Construct the full URL
     return `${process.env.BACKEND_URL}/${cleanPath}`;
   };
 
@@ -189,17 +187,17 @@ const SellerList = () => {
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
+
     console.log('Export functionality not implemented yet');
   };
 
   const handleAddNewSeller = () => {
-    // TODO: Implement add new seller functionality
+
     console.log('Add new seller functionality not implemented yet');
   };
 
   const handleViewSeller = (sellerId) => {
-    // TODO: Implement view seller functionality
+
     console.log('View seller functionality not implemented yet', sellerId);
   };
 

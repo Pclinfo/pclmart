@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import AuthContext, { AuthProvider } from './context/AuthContext';
 
+// Main Pages
 import Dashboard from './pages/Dashboard';
 import Pos from './pages/Pos';
 
@@ -23,10 +24,7 @@ import PendingRefunds from './pages/Refund Requests/PendingRefunds'
 import ApprovedRefunds from './pages/Refund Requests/ApprovedRefunds';
 import RejectedRefunds from './pages/Refund Requests/RejectedRefunds';
 import RefundedRequests from './pages/Refund Requests/RefundedRequests';
-import ProcessingRefunds from './pages/Refund Requests/ProcessingRefunds';
-import CompletedRefunds from './pages/Refund Requests/CompletedRefunds';
-import CustomerDisputes from './pages/Refund Requests/CustomerDisputes';
-import RefundHistory from './pages/Refund Requests/RefundHistory';
+
 
 // Category pages
 import Categories from './pages/Category Setup/Categories'
@@ -43,7 +41,6 @@ import Setup from './pages/Attribute/Setup'
 // Inhouse Pages
 import ProductList from './pages/Inhouse/ProductList'
 import AddNewProduct from './pages/Inhouse/AddNewProduct'
-import BulkImport from './pages/Inhouse/BulkImport'
 import RequestRestockList from './pages/Inhouse/RequestRestockList'
 
 // Manufacturer Pages
@@ -55,6 +52,7 @@ import DeniedProducts from './pages/Manufacturer/DeniedProducts'
 //Product Gallery Pages 
 import Gallery from './pages/Product Gallery/Gallery'
 
+//Banner Setup Pages
 import BannerSetup from './pages/BannerSetup';
 
 // Offer Deals Pages
@@ -75,6 +73,10 @@ import EarningReports from './pages/Report Analysis/EarningReports'
 import InhouseSales from './pages/Report Analysis/InhouseSales'
 import VendorSales from './pages/Report Analysis/VendorSales'
 import TransactionReport from './pages/Report Analysis/TransactionReport'
+
+// Product Report Pages, Product Order Pages
+import ProductReport from './pages/ProductReport';
+import OrderReport from './pages/OrderReport';
 
 // Customer Pages
 import CustomerList from './pages/Customer/CustomerList'
@@ -112,6 +114,7 @@ import OtherConfiguration from './pages/Payment/OtherConfiguration'
 import BusinessPages from './pages/PagesMedia/BusinessPages'
 import SocialMediaLinks from './pages/PagesMedia/SocialMediaLinks'
 import MediaGallery from './pages/PagesMedia/MediaGallery';
+import FileView from './pages/PagesMedia/FileView';
 import ManufacturerRegistration from './pages/PagesMedia/ManufacturerRegistration'
 
 
@@ -120,25 +123,42 @@ import Index from './pages/HelpSupport/Index'
 import Messages from './pages/HelpSupport/Messages';
 import AdminSupportTicket from './pages/HelpSupport/AdminSupportTicket';
 
+// Profile Information Pages
+import ProfileInformation from './pages/ProfileInformation';
 
-
-
+// General Pages
 import General from './pages/Business Setup/General';
 import PaymentOptions from './pages/Business Setup/PaymentOptions';
 
-
+// Subscribers Pages
 import Subscribers from './pages/Subscribers';
 
 
 
-// Loading Spinner Component
+
 const LoadingSpinner = () => (
-  <div className="flex justify-center items-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-blue-500"></div>
+  <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="relative">
+      {/* Outer ring */}
+      <div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-900"></div>
+
+      {/* Primary spinner */}
+      <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-blue-500"></div>
+
+      {/* Secondary spinner (counter rotation) */}
+      <div className="absolute inset-0 animate-spin rounded-full h-32 w-32 border-r-4 border-indigo-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+
+      {/* Pulsing center */}
+      <div className="absolute left-1/2 top-1/2 -ml-8 -mt-8 h-16 w-16 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 animate-pulse"></div>
+
+      {/* Optional loading text */}
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-gray-600 dark:text-gray-300 animate-pulse">
+        Loading...
+      </div>
+    </div>
   </div>
 );
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useContext(AuthContext);
 
@@ -180,8 +200,14 @@ const AppRoutes = () => {
         }
       />
 
+      {/* Point Of Sales Routes */}
       <Route path="/pos" element={<ProtectedRoute><Pos /></ProtectedRoute>} />
 
+
+      {/* Profile Information Routes */}
+      <Route path="/profile-information" element={<ProtectedRoute><ProfileInformation /></ProtectedRoute>} />
+
+      {/* Help & Support Routes */}
       <Route path="/index" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/support-ticket" element={<ProtectedRoute><AdminSupportTicket /></ProtectedRoute>} />
@@ -205,10 +231,6 @@ const AppRoutes = () => {
       <Route path="/refunds/approved" element={<ProtectedRoute><ApprovedRefunds /></ProtectedRoute>} />
       <Route path="/refunds/rejected" element={<ProtectedRoute><RejectedRefunds /></ProtectedRoute>} />
       <Route path="/refunds/refunded" element={<ProtectedRoute><RefundedRequests /></ProtectedRoute>} />
-      <Route path="/refunds/processing" element={<ProtectedRoute><ProcessingRefunds /></ProtectedRoute>} />
-      <Route path="/refunds/completed" element={<ProtectedRoute><CompletedRefunds /></ProtectedRoute>} />
-      <Route path="/refunds/disputes" element={<ProtectedRoute><CustomerDisputes /></ProtectedRoute>} />
-      <Route path="/refunds/history" element={<ProtectedRoute><RefundHistory /></ProtectedRoute>} />
 
       {/* Category Routes */}
       <Route path="/categorysetup/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
@@ -225,7 +247,6 @@ const AppRoutes = () => {
       {/* Inhouse Routes */}
       <Route path="/inhouse/product-list" element={<ProtectedRoute><ProductList /></ProtectedRoute>} />
       <Route path="/inhouse/add-new-product" element={<ProtectedRoute><AddNewProduct /></ProtectedRoute>} />
-      <Route path="/inhouse/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
       <Route path="/inhouse/request-restock-list" element={<ProtectedRoute><RequestRestockList /></ProtectedRoute>} />
 
       {/* Manufacturer Routes */}
@@ -236,7 +257,6 @@ const AppRoutes = () => {
 
       {/* Product Gallery Routes */}
       <Route path="/productgallery/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
-
       <Route path="/banner-setup" element={<ProtectedRoute><BannerSetup /></ProtectedRoute>} />
 
       {/* Offer Deals Routes */}
@@ -258,6 +278,9 @@ const AppRoutes = () => {
       <Route path="/reportanalysis/vendor-sales" element={<ProtectedRoute><VendorSales /></ProtectedRoute>} />
       <Route path="/reportanalysis/transaction-report" element={<ProtectedRoute><TransactionReport /></ProtectedRoute>} />
 
+      {/* Report Routes */}
+      <Route path="/products-report" element={<ProtectedRoute><ProductReport /></ProtectedRoute>} />
+      <Route path="/order-report" element={<ProtectedRoute><OrderReport /></ProtectedRoute>} />
 
       {/* Customer Routes */}
       <Route path="/customer/customer-list" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
@@ -296,10 +319,13 @@ const AppRoutes = () => {
       <Route path="/pagesmedia/business-pages" element={<ProtectedRoute><BusinessPages /></ProtectedRoute>} />
       <Route path="/pagesmedia/social-media-links" element={<ProtectedRoute><SocialMediaLinks /></ProtectedRoute>} />
       <Route path="/pagesmedia/media-gallery" element={<ProtectedRoute><MediaGallery /></ProtectedRoute>} />
+      <Route path="/pagesmedia/file-view" element={<ProtectedRoute><FileView /></ProtectedRoute>} />
       <Route path="/pagesmedia/manufacturer-registration" element={<ProtectedRoute><ManufacturerRegistration /></ProtectedRoute>} />
 
+      {/* Pages Subscribers Routes */}
       <Route path="/subscribers" element={<ProtectedRoute><Subscribers /></ProtectedRoute>} />
 
+      {/* Pages Business Setup Routes */}
       <Route path="/business-setup/general" element={<ProtectedRoute><General /></ProtectedRoute>} />
       <Route path="/business-setup/payment-options" element={<ProtectedRoute><PaymentOptions /></ProtectedRoute>} />
 

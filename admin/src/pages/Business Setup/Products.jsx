@@ -1,8 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import config from '../../config';
 
 const Products = () => {
+  const [reorderLevel, setReorderLevel] = useState(10);
   const [digitalProduct, setDigitalProduct] = useState(false);
   const [showBrand, setShowBrand] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState(null);
+
+  // Fetch product settings on component mount
+  useEffect(() => {
+    const fetchProductSettings = async () => {
+      try {
+        const response = await fetch(`${config.apiUrl}/get_product_settings`);
+        const data = await response.json();
+        
+        setReorderLevel(data.reorderLevel);
+        setDigitalProduct(data.digitalProduct);
+        setShowBrand(data.showBrand);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching product settings:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchProductSettings();
+  }, []);
+
+  // Save product settings
+  const handleSave = async () => {
+    try {
+      setSaveStatus('saving');
+      const response = await fetch(`${config.apiUrl}/save_product_settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reorderLevel,
+          digitalProduct,
+          showBrand,
+        }),
+      });
+
+      const data = await response.json();
+      setSaveStatus('success');
+      
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving product settings:', error);
+      setSaveStatus('error');
+      
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus(null);
+      }, 3000);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white rounded-lg shadow-sm max-w-4xl mx-auto flex justify-center">
+        <div className="text-gray-500">Loading product settings...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-sm max-w-4xl mx-auto">
@@ -26,7 +92,8 @@ const Products = () => {
             <input
               type="number"
               className="flex-1 max-w-xs px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              defaultValue={10}
+              value={reorderLevel}
+              onChange={(e) => setReorderLevel(parseInt(e.target.value) || 0)}
             />
           </div>
 
@@ -65,9 +132,23 @@ const Products = () => {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end mt-6">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200">
-          Save
+      <div className="flex justify-end mt-6 items-center gap-4">
+        {saveStatus === 'success' && (
+          <span className="text-green-600">Settings saved successfully!</span>
+        )}
+        {saveStatus === 'error' && (
+          <span className="text-red-600">Error saving settings. Please try again.</span>
+        )}
+        <button 
+          className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+            saveStatus === 'saving' 
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+          onClick={handleSave}
+          disabled={saveStatus === 'saving'}
+        >
+          {saveStatus === 'saving' ? 'Saving...' : 'Save'}
         </button>
       </div>
     </div>

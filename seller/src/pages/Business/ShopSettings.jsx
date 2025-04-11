@@ -13,7 +13,7 @@ const ShopSettings = () => {
 
   const navigate = useNavigate();
 
-  // Fetch the initial temporary close status when component mounts
+
   useEffect(() => {
     fetchTemporaryCloseStatus();
   }, []);
@@ -22,19 +22,18 @@ const ShopSettings = () => {
     try {
       setIsLoading(true);
 
-      // Get auth token from localStorage
+
       const token = localStorage.getItem('token');
 
       if (!token) {
         setError('Not authenticated. Please login again.');
-        // Optionally redirect to login
-        // navigate('/login');
+
         return;
       }
 
       const response = await axios.get(`${config.apiUrl}/get_tem_close_status`, {
         headers: {
-          'Authorization': `Bearer ${token}` // Use Authorization header with Bearer token
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -44,8 +43,7 @@ const ShopSettings = () => {
       console.error('Error fetching shop status:', err);
       if (err.response && err.response.status === 401) {
         setError('Authentication failed. Please login again.');
-        // Optionally redirect to login page
-        // navigate('/login');
+
       } else {
         setError('Failed to load shop status');
       }
@@ -60,7 +58,7 @@ const ShopSettings = () => {
     try {
       setIsLoading(true);
 
-      // Get auth token from localStorage
+
       const token = localStorage.getItem('token');
 
       if (!token) {
@@ -87,7 +85,7 @@ const ShopSettings = () => {
       } else {
         setError('Failed to update shop status');
       }
-      // Revert the UI state if the API call fails
+
       setIsTemporaryClosed(isTemporaryClosed);
     } finally {
       setIsLoading(false);

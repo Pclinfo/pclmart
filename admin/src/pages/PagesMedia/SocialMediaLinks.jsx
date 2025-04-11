@@ -20,7 +20,7 @@ const SocialMediaLinks = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Load initial social media data
+
   useEffect(() => {
 
   }, []);
@@ -35,14 +35,14 @@ const SocialMediaLinks = () => {
     setError(null);
 
     try {
-      // Create a payload where only the selected platform has a value
+     
       const payload = {};
       payload[selectedPlatform.toLowerCase()] = socialMediaLink;
 
-      // Send the request to the backend
+   
       const response = await axios.post(`${config.apiUrl}/social_media`, payload);
 
-      // Update the local state with the new data
+
       setSocialMediaData(prevData =>
         prevData.map(item =>
           item.name.toLowerCase() === selectedPlatform.toLowerCase()
@@ -51,11 +51,11 @@ const SocialMediaLinks = () => {
         )
       );
 
-      // Show success message
+
       setSuccessMessage(`${selectedPlatform} updated successfully`);
       setTimeout(() => setSuccessMessage(''), 3000);
 
-      // Reset form
+
       setSocialMediaLink('');
       setSelectedPlatform('');
     } catch (err) {

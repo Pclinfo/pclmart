@@ -39,7 +39,7 @@ const Coupons = () => {
       bearer: "Seller",
       status: true
     },
-    // Add more sample data as needed
+
   ];
 
   const handleInputChange = (e) => {

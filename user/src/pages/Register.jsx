@@ -29,7 +29,7 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Existing validation functions remain the same...
+
   const validateFullName = (name) => {
     if (!name) return "Full name is required";
     if (name.length < 2) return "Full name must be at least 2 characters";
@@ -39,7 +39,7 @@ const Register = () => {
   };
 
   const validateEmail = (email) => {
-    // Existing email validation...
+
     if (!email) return "Email is required";
     email = email.trim();
     if (email.length < 10 || email.length > 320)
@@ -71,7 +71,6 @@ const Register = () => {
       [name]: value
     }));
 
-    // Real-time validation
     switch (name) {
       case 'fullname':
         setErrors(prev => ({ ...prev, fullname: validateFullName(value) }));

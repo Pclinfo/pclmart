@@ -21,12 +21,12 @@ const EditBankInfo = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Handle form submission
+
         console.log('Form submitted:', formData);
     };
 
     const handleCancel = () => {
-        // Handle cancel action
+     
         console.log('Form cancelled');
     };
 

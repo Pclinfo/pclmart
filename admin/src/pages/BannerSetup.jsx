@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import axios from 'axios'; 
+import axios from 'axios';
 import config from '../config';
 
 const BannerSetup = () => {
@@ -26,39 +26,34 @@ const BannerSetup = () => {
     const fetchBanners = async () => {
         try {
             const response = await axios.get(`${config.apiUrl}/show_banner`);
-            // Make sure we're handling the response data as an array
+
             const bannersData = Array.isArray(response.data) ? response.data : [];
-            console.log('Banners data:', bannersData); // Debug log
-            
-            // Pre-process banner data to ensure image URLs are fully formed
+            console.log('Banners data:', bannersData);
+
             const processedBanners = bannersData.map(banner => ({
                 ...banner,
-                // Add a properly formatted URL for the image that can be cached
+
                 imageUrl: banner.image ? formatImageUrl(banner.image) : null
             }));
-            
+
             setBanners(processedBanners);
         } catch (error) {
             console.error('Error fetching banners:', error);
-            setBanners([]); // Set to empty array on error
+            setBanners([]);
         }
     };
 
-    // Function to properly format image URLs
+
     const formatImageUrl = (imagePath) => {
         if (!imagePath) return null;
-        
-        // Replace backslashes with forward slashes
+
         let fixedPath = imagePath.replace(/\\/g, '/');
-        
-        // Remove any leading dot and/or slash to standardize
+
         fixedPath = fixedPath.replace(/^\.?\/?/, '');
-        
-        // If the path is intended to be served from your server, add the base URL
-        // Replace with your actual base URL if different from API URL
-        const baseUrl = config.apiUrl.replace(/\/api$/, ''); // Remove '/api' if it exists
-        
-        // Create a full URL
+
+        const baseUrl = config.apiUrl.replace(/\/api$/, '');
+
+
         return `${baseUrl}/${fixedPath}`;
     };
 
@@ -66,12 +61,12 @@ const BannerSetup = () => {
         try {
             const banner = banners.find(b => b.id === id);
             if (!banner) return;
-            
+
             await axios.put(`${config.apiUrl}/update_banner/${id}`, {
                 ...banner,
                 published: !currentState
             });
-            fetchBanners(); // Refresh data after update
+            fetchBanners();
         } catch (error) {
             console.error('Error toggling publish status:', error);
         }
@@ -91,7 +86,7 @@ const BannerSetup = () => {
         if (window.confirm('Are you sure you want to delete this banner?')) {
             try {
                 await axios.delete(`${config.apiUrl}/delete_banner/${id}`);
-                fetchBanners(); 
+                fetchBanners();
             } catch (error) {
                 console.error('Error deleting banner:', error);
             }
@@ -102,8 +97,8 @@ const BannerSetup = () => {
         const file = e.target.files[0];
         if (file) {
             setFormData({ ...formData, banner_image: file });
-            
-            // Create preview URL
+
+
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
@@ -122,7 +117,7 @@ const BannerSetup = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         const data = new FormData();
         data.append('banner_type', formData.banner_type);
         data.append('published', formData.published);
@@ -144,7 +139,7 @@ const BannerSetup = () => {
                     }
                 });
             }
-            
+
 
             setShowAddForm(false);
             setEditBanner(null);
@@ -154,7 +149,7 @@ const BannerSetup = () => {
                 banner_image: null
             });
             setImagePreview('');
-           
+
             setImageLoadErrors({});
             fetchBanners();
         } catch (error) {
@@ -163,14 +158,14 @@ const BannerSetup = () => {
     };
 
     const handleImageError = (bannerId) => {
-        // Track which images failed to load to prevent continuous reloading attempts
+
         setImageLoadErrors(prev => ({
             ...prev,
             [bannerId]: true
         }));
     };
 
-    // Safety check to ensure banners is always an array
+
     const bannersArray = Array.isArray(banners) ? banners : [];
 
     return (
@@ -208,7 +203,7 @@ const BannerSetup = () => {
                                     Filter
                                 </button>
 
-                                <button 
+                                <button
                                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
                                     onClick={() => {
                                         setEditBanner(null);
@@ -278,9 +273,9 @@ const BannerSetup = () => {
                                             />
                                             {imagePreview && (
                                                 <div className="mt-4">
-                                                    <img 
-                                                        src={imagePreview} 
-                                                        alt="Preview" 
+                                                    <img
+                                                        src={imagePreview}
+                                                        alt="Preview"
                                                         className="w-40 h-32 object-cover border rounded"
                                                     />
                                                 </div>
@@ -288,9 +283,9 @@ const BannerSetup = () => {
                                             {!imagePreview && editBanner && editBanner.imageUrl && (
                                                 <div className="mt-4">
                                                     <p className="text-sm text-gray-500 mb-1">Current image:</p>
-                                                    <img 
-                                                        src={editBanner.imageUrl} 
-                                                        alt="Current Banner" 
+                                                    <img
+                                                        src={editBanner.imageUrl}
+                                                        alt="Current Banner"
                                                         className="w-40 h-32 object-cover border rounded"
                                                         onError={() => handleImageError(editBanner.id)}
                                                     />

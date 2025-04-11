@@ -61,7 +61,7 @@ const ProductCard = ({ product, onImageLoad }) => {
         </h3>
         <p className="text-gray-600 mb-2 text-sm">{product.product_type}</p>
         <div className="flex justify-between items-center">
-          <span className="text-blue-600 font-bold">${product.unit_price}</span>
+          <span className="text-blue-600 font-bold">₹{product.unit_price}</span>
           <button
             onClick={() => navigate(`/product/${product.pid}`)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm transition-colors duration-200"

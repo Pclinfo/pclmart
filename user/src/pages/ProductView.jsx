@@ -70,13 +70,11 @@ const ProductView = () => {
                 return;
             }
 
-            // Verify stock availability
             if (product.stock < quantity) {
                 alert('Sorry, requested quantity is not available');
                 return;
             }
 
-            // Prepare checkout data
             const checkoutData = {
                 product_id: pid,
                 product_name: product.product_name,
@@ -88,7 +86,6 @@ const ProductView = () => {
                 product_description: product.product_description
             };
 
-            // Navigate to checkout with product data
             navigate('/checkout', {
                 state: {
                     items: [checkoutData],
@@ -167,7 +164,7 @@ const ProductView = () => {
 
                         {/* Price */}
                         <div className="text-2xl font-bold text-blue-600 mb-4">
-                            ${product.unit_price}
+                            ₹{product.unit_price}
                         </div>
 
                         {/* Color Selection */}
@@ -176,7 +173,7 @@ const ProductView = () => {
                             <div className="flex gap-2">
                                 {product.product_color?.split(',').map((color, index) => (
                                     <div
-                                        key={index}
+                                        key={index} 
                                         className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
                                         style={{ backgroundColor: color.trim() }}
                                     ></div>
@@ -208,7 +205,7 @@ const ProductView = () => {
 
                         {/* Total Price */}
                         <div className="text-xl font-bold mb-6">
-                            Total: ${calculateTotalPrice()}
+                            Total: ₹{calculateTotalPrice()}
                         </div>
 
                         {/* Action Buttons */}
