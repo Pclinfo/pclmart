@@ -126,7 +126,6 @@ CREATE TABLE if not exists vendors (
 CREATE TABLE if not exists product_review (
    id SERIAL PRIMARY KEY,
    seller_user_id int not null,
-   seller_user_id int not null,
    product_id int not null,
    user_login_id int not null,
    content text,
