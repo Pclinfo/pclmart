@@ -786,8 +786,8 @@ def add_brands():
         image_filename = None
         if image_file:
             image_filename = f"{brand_name}_{image_file.filename}"
-            image_path = os.path.join('./uploads/brands_image', image_filename)
-            os.makedirs('./uploads/brands_image', exist_ok=True)
+            image_path = os.path.join('./API_e-commerce/uploads/brands_image', image_filename)
+            os.makedirs('./API_e-commerce/uploads/brands_image', exist_ok=True)
             image_file.save(image_path)
         cursor.execute(
             """
@@ -846,7 +846,7 @@ def edit_brand(brand_id):
 
         if image_file:
             image_filename = f"{brand_name}_{image_file.filename}"
-            image_path = os.path.join('./uploads/brands_image', image_filename)
+            image_path = os.path.join('./API_e-commerce/uploads/brands_image', image_filename)
             image_file.save(image_path)
 
         # Update database
