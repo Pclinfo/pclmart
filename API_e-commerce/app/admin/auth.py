@@ -786,8 +786,8 @@ def add_brands():
         image_filename = None
         if image_file:
             image_filename = f"{brand_name}_{image_file.filename}"
-            image_path = os.path.join('./API_e-commerce/uploads/brands_image', image_filename)
-            os.makedirs('./API_e-commerce/uploads/brands_image', exist_ok=True)
+            image_path = os.path.join('./uploads/brands_image', image_filename)
+            os.makedirs('./uploads/brands_image', exist_ok=True)
             image_file.save(image_path)
         cursor.execute(
             """
@@ -846,7 +846,7 @@ def edit_brand(brand_id):
 
         if image_file:
             image_filename = f"{brand_name}_{image_file.filename}"
-            image_path = os.path.join('./API_e-commerce/uploads/brands_image', image_filename)
+            image_path = os.path.join('./uploads/brands_image', image_filename)
             image_file.save(image_path)
 
         # Update database
@@ -1217,7 +1217,7 @@ def delete_sub_sub_category(id):
 
 
 def list_files():
-    UPLOAD_FOLDER = os.path.join(r'API_e-commerce\uploads')
+    UPLOAD_FOLDER = os.path.join(r'uploads')
     file_structure = []
     for root, dirs, files in os.walk(UPLOAD_FOLDER):
         relative_path = os.path.relpath(root, UPLOAD_FOLDER)
@@ -1233,7 +1233,7 @@ def list_files():
 
 
 def upload_file():
-    UPLOAD_FOLDER = os.path.join(r'API_e-commerce\uploads')
+    UPLOAD_FOLDER = os.path.join(r'uploads')
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 

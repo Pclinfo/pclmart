@@ -9,7 +9,7 @@ def create_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SECRET_KEY'] = 'pclinfo'
-    app.config['SESSION_FILE_DIR']=r'API_e-commerce\flask_session'
+    app.config['SESSION_FILE_DIR']=r'flask_session'
 
     Session(app)
 

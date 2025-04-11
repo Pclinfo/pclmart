@@ -391,7 +391,7 @@ def software_update():
             return jsonify({"message": "All fields are required"}), 400
 
         try:
-            UPLOAD_FOLDER = os.path.join('API_e-commerce/uploads', 'software_updates')
+            UPLOAD_FOLDER = os.path.join('uploads', 'software_updates')
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             filename = secure_filename(f"{username}_{file.filename}")
             file_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -515,7 +515,7 @@ def payment_methods_handler():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    UPLOAD_FOLDER = os.path.join('API_e-commerce/uploads', 'payment_logo')
+    UPLOAD_FOLDER = os.path.join('uploads', 'payment_logo')
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     if request.method == 'POST':

@@ -1538,7 +1538,7 @@ def invoice_settings():
     is_active_str = request.form.get("isActive", "false")
     is_active = is_active_str.lower() == 'true'
     
-    UPLOAD_FOLDER = os.path.join( r'API_e-commerce\uploads')
+    UPLOAD_FOLDER = os.path.join( r'uploads')
     logo_url = None
     if 'logo' in request.files:
         file = request.files['logo']
@@ -1593,7 +1593,7 @@ def inhouse_settings_setup():
     
     try:
         # Define upload folder
-        UPLOAD_FOLDER = os.path.join('API_e-commerce', 'uploads')
+        UPLOAD_FOLDER = os.path.join('uploads')
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         
         if request.method == "GET":

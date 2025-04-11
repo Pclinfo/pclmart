@@ -202,7 +202,7 @@ from app.admin.auth3 import (
 )
 blueprint = Blueprint("routes", __name__)
 
-UPLOAD_FOLDER = os.path.join(os.getcwd(), r"API_e-commerce\uploads")
+UPLOAD_FOLDER = os.path.join(os.getcwd(), r"uploads")
 
 
 @blueprint.route("/uploads/media", methods=["GET", "POST"])
