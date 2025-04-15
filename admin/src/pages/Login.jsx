@@ -98,7 +98,7 @@ const Login = () => {
     try {
       const response = await api.post('/admin_login', formData);
 
-      if (response.data) {
+      if (response.data && response.data.token) {
 
         login(response.data);
         navigate('/dashboard');
